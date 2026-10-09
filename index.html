@@ -1,0 +1,3670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1119">
+<title>华夏足球大亨 · HuaXia Football Tycoon</title>
+<style>
+    :root {
+        --bg: #0f1119;
+        --card-bg: #1a1d2b;
+        --card-hover: #1f2335;
+        --primary: #e63946;
+        --primary-glow: #ff4757;
+        --gold: #f0c040;
+        --gold-dark: #c7940a;
+        --text: #e8e8ef;
+        --text-secondary: #a0a4b8;
+        --border: #2a2d3d;
+        --green: #2ed573;
+        --blue: #4dabf7;
+        --orange: #ffa94d;
+        --purple: #a29bfe;
+        --badge-bg: #252838;
+        --input-bg: #141720;
+        --progress-bg: #252838;
+        --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        --radius: 12px;
+        --radius-sm: 8px;
+        --transition: 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+        font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- 背景粒子 ---------- */
+    .bg-particles {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        overflow: hidden;
+        contain: strict;
+    }
+    .bg-particle {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--primary);
+        opacity: 0.03;
+        will-change: transform, opacity;
+        animation: floatUp 24s linear infinite;
+    }
+    @keyframes floatUp {
+        0%   { transform: translateY(100vh) scale(0.2); opacity: 0; }
+        12%  { opacity: 0.05; }
+        88%  { opacity: 0.02; }
+        100% { transform: translateY(-12vh) scale(2.4); opacity: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .bg-particle { animation: none; display: none; }
+        .panel { animation: none !important; }
+        * { transition-duration: 0.01ms !important; }
+    }
+
+    /* ---------- 布局 ---------- */
+    .app-container {
+        position: relative;
+        z-index: 1;
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 16px 20px 48px;
+    }
+
+    /* ---------- 顶部栏 ---------- */
+    .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: var(--card-bg);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+        border: 1px solid var(--border);
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: var(--shadow);
+    }
+    .logo-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .logo-icon {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #c0392b);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; color: #fff; font-weight: bold; flex-shrink: 0;
+    }
+    .game-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
+    .game-title span { color: var(--primary-glow); }
+    .season-badge {
+        background: var(--badge-bg); padding: 6px 14px; border-radius: 20px;
+        font-size: 0.85rem; font-weight: 600; border: 1px solid var(--border); white-space: nowrap;
+    }
+    .quick-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .quick-stat { text-align: center; min-width: 56px; }
+    .quick-stat .val { font-size: 1.05rem; font-weight: 700; color: var(--gold); white-space: nowrap; }
+    .quick-stat .lbl { font-size: 0.68rem; color: var(--text-secondary); letter-spacing: 0.5px; }
+
+    /* ---------- 导航 ---------- */
+    .nav-tabs {
+        display: flex; gap: 4px; align-items: center;
+        margin-bottom: 16px; flex-wrap: wrap;
+        background: var(--card-bg); padding: 5px;
+        border-radius: var(--radius); border: 1px solid var(--border);
+    }
+    .nav-tab {
+        padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        font-weight: 600; font-size: 0.88rem; transition: all var(--transition);
+        border: none; background: transparent; color: var(--text-secondary);
+        white-space: nowrap; font-family: inherit;
+    }
+    .nav-tab:hover { color: var(--text); background: rgba(255, 255, 255, 0.04); }
+    .nav-tab.active { background: var(--primary); color: #fff; box-shadow: 0 2px 12px rgba(230, 57, 70, 0.3); }
+    .nav-spacer { margin-left: auto; }
+    .toolbar { display: flex; gap: 6px; flex-wrap: wrap; padding-right: 4px; }
+
+    /* ---------- 面板 ---------- */
+    .panel { display: none; animation: fadeSlideIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- 卡片 ---------- */
+    .card {
+        background: var(--card-bg); border-radius: var(--radius);
+        padding: 20px 22px; border: 1px solid var(--border);
+        margin-bottom: 16px; box-shadow: var(--shadow); transition: border-color var(--transition);
+    }
+    .card:hover { border-color: #3a3d52; }
+    .card-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.2px; }
+    .card-subtitle { font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* ---------- 按钮 ---------- */
+    .btn {
+        padding: 9px 18px; border-radius: 8px; font-weight: 600; cursor: pointer;
+        border: none; font-size: 0.88rem; transition: all var(--transition);
+        font-family: inherit; display: inline-flex; align-items: center; gap: 6px;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #ff4757; box-shadow: 0 4px 16px rgba(230, 57, 70, 0.35); transform: translateY(-1px); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: #5a5d75; background: rgba(255, 255, 255, 0.03); }
+    .btn-outline.active { border-color: var(--gold); color: var(--gold); }
+    .btn-sm { padding: 5px 12px; font-size: 0.78rem; border-radius: 6px; }
+    .btn-gold { background: linear-gradient(135deg, #f0c040, #d4a017); color: #1a1a1a; font-weight: 700; }
+    .btn-gold:hover { box-shadow: 0 4px 18px rgba(240, 192, 64, 0.4); transform: translateY(-1px); }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .btn-danger:hover { background: #e74c3c; }
+    .btn-success { background: #27ae60; color: #fff; }
+    .btn-success:hover { background: #2ed573; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    /* ---------- 表单控件 ---------- */
+    select, input {
+        background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+        padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
+    }
+    select:focus, input:focus { outline: none; border-color: #4a4d68; }
+
+    /* ---------- 表格 ---------- */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th {
+        text-align: left; padding: 10px 8px; color: var(--text-secondary);
+        font-weight: 600; font-size: 0.72rem; letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border); white-space: nowrap;
+    }
+    td { padding: 9px 8px; border-bottom: 1px solid rgba(42, 45, 61, 0.6); white-space: nowrap; }
+    tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .row-user { background: rgba(230, 57, 70, 0.09); }
+    .row-user td { border-bottom-color: rgba(230, 57, 70, 0.25); }
+    .rank-acl td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+    .rank-rel td:first-child { box-shadow: inset 3px 0 0 var(--primary); }
+    .clickable { cursor: pointer; }
+
+    /* ---------- 星星 / 进度条 ---------- */
+    .stars { color: var(--gold); letter-spacing: 1px; }
+    .progress-bar { height: 8px; background: var(--progress-bg); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .progress-fill.green { background: var(--green); }
+    .progress-fill.blue { background: var(--blue); }
+    .progress-fill.orange { background: var(--orange); }
+    .progress-fill.red { background: var(--primary); }
+    .progress-fill.gold { background: var(--gold); }
+    .mini-bar { height: 5px; background: var(--progress-bg); border-radius: 3px; overflow: hidden; margin-top: 5px; }
+
+    /* ---------- 球员卡片 ---------- */
+    .player-card {
+        background: var(--badge-bg); border-radius: var(--radius-sm); padding: 14px;
+        border: 1px solid transparent; cursor: pointer; transition: all var(--transition);
+        text-align: center; min-width: 100px;
+    }
+    .player-card:hover {
+        border-color: var(--border); background: var(--card-hover);
+        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+    .pos-badge {
+        display: inline-block; padding: 3px 10px; border-radius: 12px;
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .pos-badge.fw { background: #e63946; color: #fff; }
+    .pos-badge.mf { background: #4dabf7; color: #fff; }
+    .pos-badge.df { background: #2ed573; color: #1a1a1a; }
+    .pos-badge.gk { background: #f0c040; color: #1a1a1a; }
+    .player-name { font-weight: 700; font-size: 0.9rem; margin: 4px 0; }
+    .player-rating { font-size: 1.5rem; font-weight: 800; color: var(--gold); line-height: 1.2; }
+    .player-detail { font-size: 0.7rem; color: var(--text-secondary); }
+    .flag-injured { color: var(--primary); font-weight: 700; }
+
+    /* ---------- 比赛展示 ---------- */
+    .match-result {
+        display: flex; align-items: center; justify-content: center; gap: 16px;
+        padding: 20px; background: var(--badge-bg); border-radius: var(--radius);
+        flex-wrap: wrap; text-align: center;
+    }
+    .match-team { font-weight: 700; font-size: 1.1rem; min-width: 90px; }
+    .match-score {
+        font-size: 2.8rem; font-weight: 900; letter-spacing: 4px; color: #fff;
+        text-shadow: 0 0 30px rgba(255, 255, 255, 0.3); line-height: 1.1;
+    }
+    .match-vs { color: var(--text-secondary); font-size: 0.78rem; }
+    .match-scorers { font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px; max-width: 320px; }
+
+    /* ---------- 时间轴 ---------- */
+    .timeline { position: relative; padding-left: 14px; }
+    .timeline::before {
+        content: ''; position: absolute; left: 4px; top: 6px; bottom: 6px;
+        width: 2px; background: var(--border);
+    }
+    .tl-item { position: relative; padding: 6px 0 6px 12px; font-size: 0.85rem; }
+    .tl-item::before {
+        content: ''; position: absolute; left: -14px; top: 13px;
+        width: 8px; height: 8px; border-radius: 50%; background: var(--text-secondary);
+    }
+    .tl-item.home::before { background: var(--green); }
+    .tl-item.away::before { background: var(--blue); }
+    .tl-min { color: var(--gold); font-weight: 700; margin-right: 6px; }
+
+    /* ---------- 赛果条 ---------- */
+    .fixture-row {
+        display: flex; align-items: center; gap: 8px; padding: 8px 4px;
+        border-bottom: 1px solid rgba(42, 45, 61, 0.6); font-size: 0.85rem; flex-wrap: wrap;
+    }
+    .fixture-row:last-child { border-bottom: none; }
+    .fixture-row.is-user { background: rgba(230, 57, 70, 0.07); border-radius: 6px; padding-left: 8px; }
+    .fx-team { flex: 1 1 30%; min-width: 96px; }
+    .fx-team.away { text-align: right; }
+    .fx-score {
+        font-weight: 800; min-width: 62px; text-align: center; letter-spacing: 1px;
+        background: var(--input-bg); border-radius: 6px; padding: 2px 6px;
+    }
+
+    /* ---------- 徽章 ---------- */
+    .badge {
+        display: inline-block; padding: 2px 7px; border-radius: 4px;
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .badge-green { background: #27ae60; color: #fff; }
+    .badge-red { background: #e63946; color: #fff; }
+    .badge-blue { background: #4dabf7; color: #1a1a1a; }
+    .badge-gold { background: var(--gold); color: #1a1a1a; }
+    .badge-grey { background: #3a3d52; color: var(--text); }
+    .form-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 22px; height: 22px; border-radius: 5px; font-size: 0.7rem; font-weight: 800; margin-right: 4px;
+    }
+    .form-w { background: #27ae60; color: #fff; }
+    .form-d { background: #4a4d68; color: #fff; }
+    .form-l { background: #c0392b; color: #fff; }
+
+    /* ---------- 网格 ---------- */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
+    .kv { display: flex; flex-direction: column; gap: 2px; }
+    .kv .k { font-size: 0.68rem; color: var(--text-secondary); }
+    .kv .v { font-weight: 700; }
+    .empty { color: var(--text-secondary); padding: 20px; text-align: center; }
+
+    /* ---------- 模态框 ---------- */
+    .modal-overlay {
+        position: fixed; inset: 0; background: rgba(0, 0, 0, 0.72); z-index: 100;
+        display: flex; align-items: center; justify-content: center; padding: 16px;
+        animation: fadeIn 0.2s ease; -webkit-overflow-scrolling: touch;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+        background: var(--card-bg); border-radius: var(--radius); padding: 24px;
+        max-width: 520px; width: 100%; border: 1px solid var(--border);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); max-height: 86vh; overflow-y: auto;
+    }
+    .modal h3 { margin-bottom: 12px; font-size: 1.15rem; }
+    .modal .close-btn {
+        float: right; background: none; border: none; color: var(--text-secondary);
+        font-size: 1.4rem; cursor: pointer; padding: 0 4px; line-height: 1;
+    }
+    .modal .close-btn:hover { color: #fff; }
+
+    /* ---------- Toast（修复：多条堆叠而不是互相覆盖） ---------- */
+    #toastContainer {
+        position: fixed; top: 16px; right: 16px; z-index: 200;
+        display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+        pointer-events: none; max-width: min(92vw, 360px);
+    }
+    .toast {
+        background: #2ed573; color: #10240f; padding: 11px 18px; border-radius: 8px;
+        font-weight: 600; font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        animation: slideInRight 0.25s ease; word-break: break-word;
+    }
+    .toast.error { background: #e63946; color: #fff; }
+    .toast.info { background: #4dabf7; color: #0b1c2c; }
+    .toast.hide { opacity: 0; transform: translateX(20px); transition: all 0.3s ease; }
+    @keyframes slideInRight {
+        from { transform: translateX(120%); opacity: 0; }
+        to   { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ---------- 滚动条 ---------- */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3a3d52; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #5a5d75; }
+
+    .scroll-y { max-height: 260px; overflow-y: auto; }
+    .scroll-y-lg { max-height: 380px; overflow-y: auto; }
+    .mt-8 { margin-top: 8px; }
+    .mt-14 { margin-top: 14px; }
+    .flex-wrap { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .center { text-align: center; }
+
+    /* ---------- 免责声明 ---------- */
+    .disclaimer {
+        margin-top: 20px; padding: 14px 18px; border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border);
+        color: var(--text-secondary); font-size: 0.72rem; line-height: 1.7;
+    }
+    .disclaimer strong { color: var(--text); }
+
+    @media (max-width: 768px) {
+        .app-container { padding: 12px 12px 40px; }
+        .top-bar { flex-direction: column; align-items: flex-start; }
+        .match-score { font-size: 2rem; letter-spacing: 2px; }
+        .nav-tab { padding: 8px 12px; font-size: 0.78rem; }
+        .card { padding: 14px; }
+        .grid-2 { grid-template-columns: 1fr; }
+        table { font-size: 0.74rem; }
+        th, td { padding: 6px 5px; }
+        .toolbar { width: 100%; }
+        .nav-spacer { margin-left: 0; }
+    }
+</style>
+</head>
+<body>
+
+<!-- 背景粒子 -->
+<div class="bg-particles" id="bgParticles" aria-hidden="true"></div>
+
+<!-- Toast 容器 -->
+<div id="toastContainer" aria-live="polite"></div>
+
+<!-- 主应用容器 -->
+<div class="app-container">
+
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+        <div class="logo-area">
+            <div class="logo-icon">⚽</div>
+            <div class="game-title">华夏<span>足球大亨</span></div>
+            <div class="season-badge" id="seasonBadge">🏆 2025 赛季</div>
+        </div>
+        <div class="quick-stats">
+            <div class="quick-stat"><div class="val" id="qsTeam">--</div><div class="lbl">执教球队</div></div>
+            <div class="quick-stat"><div class="val" id="qsRank">--</div><div class="lbl">联赛排名</div></div>
+            <div class="quick-stat"><div class="val" id="qsBudget">--</div><div class="lbl">俱乐部余额</div></div>
+            <div class="quick-stat"><div class="val" id="qsRound">--</div><div class="lbl">当前轮次</div></div>
+        </div>
+    </div>
+
+    <!-- 导航标签 -->
+    <div class="nav-tabs" id="navTabs">
+        <button class="nav-tab active" data-action="tab" data-id="dashboard">📊 仪表盘</button>
+        <button class="nav-tab" data-action="tab" data-id="squad">👥 阵容</button>
+        <button class="nav-tab" data-action="tab" data-id="match">⚽ 比赛日</button>
+        <button class="nav-tab" data-action="tab" data-id="standings">🏆 积分榜</button>
+        <button class="nav-tab" data-action="tab" data-id="comps">🏅 杯赛</button>
+        <button class="nav-tab" data-action="tab" data-id="stats">📈 数据榜</button>
+        <button class="nav-tab" data-action="tab" data-id="transfer">💸 转会</button>
+        <button class="nav-tab" data-action="tab" data-id="finance">💰 财政</button>
+        <div class="nav-spacer"></div>
+        <div class="toolbar">
+            <button class="btn btn-outline btn-sm" data-action="save">💾 存档</button>
+            <button class="btn btn-outline btn-sm" data-action="load">📂 读档</button>
+            <button class="btn btn-outline btn-sm" data-action="restart">🔄 重开</button>
+        </div>
+    </div>
+
+    <!-- ==================== 仪表盘 ==================== -->
+    <div class="panel active" id="panel-dashboard">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📋 球队概览</span>
+                    <span class="card-subtitle" id="dashTeamName">--</span>
+                </div>
+                <div class="flex-wrap">
+                    <div class="logo-icon" id="dashTeamEmoji" style="width:60px;height:60px;font-size:28px;">⚽</div>
+                    <div>
+                        <div style="font-size:1.3rem;font-weight:700;" id="dashTeamFull">--</div>
+                        <div style="color:var(--text-secondary);font-size:0.85rem;">主教练：<strong>你</strong></div>
+                        <div style="color:var(--text-secondary);font-size:0.85rem;">主场：<span id="dashStadium">--</span></div>
+                        <div style="color:var(--text-secondary);font-size:0.85rem;">
+                            综合实力：<span id="dashPower" style="color:var(--gold);font-weight:700;">--</span>
+                            <span style="margin-left:8px;">攻 <span id="dashAtk" style="color:var(--orange);">--</span>
+                            / 守 <span id="dashDef" style="color:var(--blue);">--</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-wrap mt-14" style="gap:18px;">
+                    <div class="kv"><span class="k">总球员</span><span class="v" id="dashTotalPlayers">--</span></div>
+                    <div class="kv"><span class="k">外援</span><span class="v" id="dashForeign">--</span></div>
+                    <div class="kv"><span class="k">平均年龄</span><span class="v" id="dashAvgAge">--</span></div>
+                    <div class="kv"><span class="k">球队身价</span><span class="v" id="dashValue">--</span></div>
+                    <div class="kv"><span class="k">每轮薪资</span><span class="v" id="dashWage">--</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📈 赛季表现</span>
+                    <span class="card-subtitle" id="dashRank">--</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+                    <div class="kv"><span class="k">胜</span><span class="v" style="color:var(--green);font-size:1.3rem;" id="dashWins">0</span></div>
+                    <div class="kv"><span class="k">平</span><span class="v" style="color:var(--blue);font-size:1.3rem;" id="dashDraws">0</span></div>
+                    <div class="kv"><span class="k">负</span><span class="v" style="color:var(--primary);font-size:1.3rem;" id="dashLosses">0</span></div>
+                    <div class="kv"><span class="k">积分</span><span class="v" style="color:var(--gold);font-size:1.3rem;" id="dashPoints">0</span></div>
+                </div>
+                <div class="mt-14" style="font-size:0.85rem;">
+                    <span style="color:var(--text-secondary);">进球/失球：</span><strong id="dashGoals">0 / 0</strong>
+                    <span style="margin-left:10px;color:var(--text-secondary);">净胜球：</span><strong id="dashGD">0</strong>
+                </div>
+                <div class="mt-14">
+                    <div style="font-size:0.68rem;color:var(--text-secondary);margin-bottom:6px;">近期状态</div>
+                    <div id="dashForm"><span style="color:var(--text-secondary);font-size:0.8rem;">暂无比赛</span></div>
+                </div>
+                <div class="mt-14" style="font-size:0.75rem;color:var(--text-secondary);">历史战绩：<span id="dashHistory">暂无</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-title">🔔 俱乐部动态</span></div>
+            <div id="dashNews" class="scroll-y">
+                <div class="empty">欢迎来到华夏足球大亨！请选择你要执教的球队。</div>
+            </div>
+        </div>
+
+        <div class="center mt-8">
+            <button class="btn btn-primary" data-action="tab" data-id="match" style="font-size:1rem;padding:12px 28px;">⚽ 进入比赛日</button>
+        </div>
+    </div>
+
+    <!-- ==================== 阵容 ==================== -->
+    <div class="panel" id="panel-squad">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">👥 球员阵容</span>
+                <div class="flex-wrap">
+                    <select id="squadFilter">
+                        <option value="all">全部位置</option>
+                        <option value="GK">门将</option>
+                        <option value="DF">后卫</option>
+                        <option value="MF">中场</option>
+                        <option value="FW">前锋</option>
+                    </select>
+                    <select id="squadSort">
+                        <option value="ability">按能力</option>
+                        <option value="value">按身价</option>
+                        <option value="age">按年龄</option>
+                        <option value="goals">按进球</option>
+                        <option value="fitness">按体能</option>
+                    </select>
+                    <span class="card-subtitle" id="squadCount">--</span>
+                </div>
+            </div>
+            <div class="grid-4" id="squadGrid">
+                <div class="empty" style="grid-column:1/-1;">请先选择执教球队</div>
+            </div>
+        </div>
+        <div class="card" id="tacticsCard" style="display:none;">
+            <div class="card-header">
+                <span class="card-title">🎯 战术设置</span>
+                <span class="card-subtitle" id="tacticsHint">进攻提升进球期望，防守降低失球期望</span>
+            </div>
+            <div class="flex-wrap">
+                <button class="btn btn-outline btn-sm" data-action="tactics" data-id="balanced">⚖️ 均衡</button>
+                <button class="btn btn-outline btn-sm" data-action="tactics" data-id="attack">🔥 进攻</button>
+                <button class="btn btn-outline btn-sm" data-action="tactics" data-id="defense">🛡️ 防守</button>
+                <span class="card-subtitle" style="margin-left:8px;">当前：<strong id="currentTactics" style="color:var(--gold);">均衡</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 比赛日 ==================== -->
+    <div class="panel" id="panel-match">
+        <div class="card center">
+            <div class="card-header" style="justify-content:center;">
+                <span class="card-title">⚽ 比赛日 · 第 <span id="matchRound">1</span> / <span id="matchTotalRounds">30</span> 轮</span>
+                <span class="card-subtitle" id="matchVenue"></span>
+            </div>
+            <div class="match-result">
+                <div class="match-team" id="matchHomeTeam">--</div>
+                <div>
+                    <div class="match-score" id="matchScore">- : -</div>
+                    <div class="match-vs" id="matchVs">VS</div>
+                    <div class="match-scorers" id="matchScorers"></div>
+                </div>
+                <div class="match-team" id="matchAwayTeam">--</div>
+            </div>
+            <div class="mt-14 card-subtitle" id="matchStatus">准备就绪，点击下方按钮模拟本轮全部比赛</div>
+            <div class="mt-14 flex-wrap" style="justify-content:center;">
+                <button class="btn btn-primary" id="btnSimMatch" data-action="sim-match">🎲 模拟本轮</button>
+                <button class="btn btn-outline" id="btnNextRound" data-action="next-round">➡️ 进入下一轮</button>
+            </div>
+        </div>
+
+        <div class="card" id="myCompCard" style="display:none;">
+            <div class="card-header">
+                <span class="card-title">📌 本轮我的杯赛 / 环亚杯</span>
+                <span class="card-subtitle" id="myCompSub"></span>
+            </div>
+            <div id="myCompMatches"></div>
+        </div>
+
+        <div class="card" id="timelineCard" style="display:none;">
+            <div class="card-header"><span class="card-title">⏱️ 进球时间轴</span><span class="card-subtitle" id="timelineSub"></span></div>
+            <div class="timeline" id="matchTimeline"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><span class="card-title">📋 本轮赛程</span><span class="card-subtitle" id="fixturesRound"></span></div>
+            <div id="otherFixtures" class="scroll-y-lg">
+                <div class="empty">正在载入赛程…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 积分榜 ==================== -->
+    <div class="panel" id="panel-standings">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">🏆 华夏超级联赛积分榜</span>
+                <span class="card-subtitle" id="standingsRound">第 1 轮</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th><th>球队</th><th>场次</th><th>胜</th><th>平</th><th>负</th>
+                            <th>进球</th><th>失球</th><th>净胜</th><th>积分</th><th>近况</th>
+                        </tr>
+                    </thead>
+                    <tbody id="standingsBody">
+                        <tr><td colspan="11" class="empty">请先选择执教球队并开始赛季</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-14 card-subtitle">🟩 左侧绿条 = 环亚杯资格区（前 4）　🟥 左侧红条 = 降级区（后 2）</div>
+        </div>
+    </div>
+
+    <!-- ==================== 杯赛 ==================== -->
+    <div class="panel" id="panel-comps">
+        <div class="nav-tabs" style="margin-bottom:12px;">
+            <button class="nav-tab active" data-action="comptab" data-id="cup">🏆 华夏杯</button>
+            <button class="nav-tab" data-action="comptab" data-id="acl">🌏 环亚冠军联赛</button>
+            <button class="nav-tab" data-action="comptab" data-id="cwc">🌍 环球杯</button>
+        </div>
+        <div id="compBody"></div>
+    </div>
+
+    <!-- ==================== 数据榜 ==================== -->
+    <div class="panel" id="panel-stats">
+        <div class="grid-3">
+            <div class="card">
+                <div class="card-header"><span class="card-title">⚽ 射手榜</span></div>
+                <div class="scroll-y-lg"><table><thead><tr><th>#</th><th>球员</th><th>球队</th><th>球</th></tr></thead><tbody id="statsScorers"></tbody></table></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">🅰️ 助攻榜</span></div>
+                <div class="scroll-y-lg"><table><thead><tr><th>#</th><th>球员</th><th>球队</th><th>助</th></tr></thead><tbody id="statsAssists"></tbody></table></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">⭐ 评分榜</span></div>
+                <div class="scroll-y-lg"><table><thead><tr><th>#</th><th>球员</th><th>球队</th><th>均分</th></tr></thead><tbody id="statsRatings"></tbody></table></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 转会市场 ==================== -->
+    <div class="panel" id="panel-transfer">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">💸 转会市场</span>
+                <span class="card-subtitle">可用余额：<strong style="color:var(--gold);" id="transferBudget">--</strong></span>
+            </div>
+            <div class="flex-wrap" style="margin-bottom:10px;">
+                <button class="btn btn-outline btn-sm" data-action="refresh-market">🔄 刷新市场</button>
+                <select id="transferFilter">
+                    <option value="all">全部位置</option>
+                    <option value="GK">门将</option>
+                    <option value="DF">后卫</option>
+                    <option value="MF">中场</option>
+                    <option value="FW">前锋</option>
+                </select>
+                <span class="card-subtitle" id="transferHint">每 4 轮自动刷新一次</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>球员</th><th>位置</th><th>年龄</th><th>能力</th><th>潜力</th><th>身价</th><th>要价</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="transferBody">
+                        <tr><td colspan="8" class="empty">加载中…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 财政 ==================== -->
+    <div class="panel" id="panel-finance">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header"><span class="card-title">💰 财政概览</span><span class="card-subtitle" id="finSeason">--</span></div>
+                <div style="font-size:2rem;font-weight:900;color:var(--gold);" id="finBalance">--</div>
+                <div class="card-subtitle">当前俱乐部余额</div>
+                <div class="mt-14" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="kv"><span class="k" style="color:var(--green);">📈 本赛季总收入</span><span class="v" id="finIncome">0 万</span></div>
+                    <div class="kv"><span class="k" style="color:var(--primary);">📉 本赛季总支出</span><span class="v" id="finExpense">0 万</span></div>
+                    <div class="kv"><span class="k">💼 每轮薪资总额</span><span class="v" id="finWage">0 万</span></div>
+                    <div class="kv"><span class="k">🏟️ 主场容量</span><span class="v" id="finCapacity">--</span></div>
+                </div>
+                <div class="mt-14 card-subtitle" id="finTip"></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">📊 财务明细</span><span class="card-subtitle">最近 30 条</span></div>
+                <div class="scroll-y-lg" id="finDetails">
+                    <div class="empty">暂无记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 免责声明 -->
+    <div class="disclaimer">
+        <strong>⚠️ 虚构作品声明</strong><br>
+        本游戏为完全虚构的足球经营模拟作品。游戏内全部球队、球员、教练、联赛、杯赛、洲际及世界赛事、球场等名称与设定均为原创虚构，
+        与任何真实存在的俱乐部、联赛组织、协会、企业或个人<strong>无任何关联</strong>；如与现实名称雷同纯属巧合。
+        本作品不含任何真实商标、队徽、球员肖像或赛事标识。
+    </div>
+</div>
+
+<!-- 球员详情 -->
+<div class="modal-overlay" id="playerModal" style="display:none;" data-action="close-modal" data-id="playerModal" data-self="1">
+    <div class="modal">
+        <button class="close-btn" data-action="close-modal" data-id="playerModal">✕</button>
+        <div id="playerModalBody"></div>
+    </div>
+</div>
+
+<!-- 选择球队 -->
+<div class="modal-overlay" id="teamSelectModal" style="display:none;" data-action="close-modal" data-id="teamSelectModal" data-self="1">
+    <div class="modal" style="max-width:680px;">
+        <h3>🏆 选择你要执教的球队</h3>
+        <p class="card-subtitle" style="margin-bottom:14px;">预算越高、实力越强的球队起步越轻松</p>
+        <div class="grid-3" id="teamSelectGrid"></div>
+    </div>
+</div>
+
+<!-- 赛季总结 -->
+<div class="modal-overlay" id="seasonModal" style="display:none;" data-action="close-modal" data-id="seasonModal" data-self="1">
+    <div class="modal" style="max-width:560px;">
+        <div id="seasonModalBody"></div>
+        <div class="flex-wrap mt-14">
+            <button class="btn btn-gold" data-action="new-season">🚀 开启新赛季</button>
+            <button class="btn btn-outline" data-action="close-modal" data-id="seasonModal">稍后再说</button>
+        </div>
+    </div>
+</div>
+
+<!-- 环球杯 -->
+<div class="modal-overlay" id="cwcModal" style="display:none;" data-action="close-modal" data-id="cwcModal" data-self="1">
+    <div class="modal" style="max-width:620px;">
+        <div id="cwcModalBody"></div>
+        <div class="flex-wrap mt-14">
+            <button class="btn btn-primary" data-action="sim-cwc">🎲 模拟下一轮</button>
+            <button class="btn btn-gold" data-action="sim-cwc-all">⏩ 一键打到底</button>
+            <button class="btn btn-outline" data-action="tab" data-id="comps">查看杯赛中心</button>
+        </div>
+    </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================
+   华夏足球大亨 · 单文件完整版
+   ---------------------------------------------------------
+   ⚠️ 版权声明：本作品为完全虚构的足球经营模拟游戏。
+   游戏内出现的全部球队、球员、教练、联赛、杯赛、洲际与
+   世界赛事、球场、赞助商等名称及设定，均为本作品原创虚
+   构，与任何真实存在的俱乐部、联赛组织、协会、企业或个
+   人无任何关联。如与现实中的名称雷同，纯属巧合。
+   本作品不包含任何真实商标、队徽、球员肖像或赛事标识。
+   ---------------------------------------------------------
+   结构：常量数据 → 状态 → 工具 → 球员/赛程 → 比赛引擎
+        → 赛季与经济 → 存档 → 渲染 → 事件 → 启动
+   ========================================================= */
+
+/* ==================== 一、常量与静态数据 ==================== */
+
+const SAVE_KEY = 'hxfc_save_v5';
+const SAVE_VERSION = 5;
+const START_YEAR = 2025;
+
+const POS_LABEL = { GK: '门将', DF: '后卫', MF: '中场', FW: '前锋' };
+const POS_CLASS = { GK: 'gk', DF: 'df', MF: 'mf', FW: 'fw' };
+const POS_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 };
+const POS_LIST = ['GK', 'DF', 'MF', 'FW'];
+
+// 经济参数（单位：万）
+const ECON = {
+    WAGE_RATE: 0.0075,         // 每轮工资 = 身价 × 该系数（身价下调后同步调整，保持薪资总额合理）
+    OPERATION_PER_ROUND: 20,   // 每轮俱乐部基础运营支出（差旅、青训、行政）
+    OPERATION_CAP: 0.001,      // 每轮球场维护 = 座位数 × 该系数
+    TV_PER_ROUND: 75,          // 每轮转播分成
+    SPONSOR_EVERY: 8,          // 每几轮收到一次赞助（一季 3 次）
+    SPONSOR_MIN: 350,
+    SPONSOR_MAX: 750,
+    TICKET_MIN: 80,            // 票价区间（元）
+    TICKET_MAX: 180,
+    SEASON_TICKET: 1300,       // 新赛季季票收入基准
+    MARKET_REFRESH_EVERY: 4,   // 每几轮刷新转会市场
+    PRIZE: [4200, 3200, 2600, 2200, 1900, 1600, 1400, 1250, 1100, 950, 850, 750, 680, 620, 570, 520],
+    MAX_SQUAD: 28,
+    MIN_SQUAD: 16,
+    MAX_FOREIGN: 5,
+    MAX_LINEUP: 11,
+};
+
+// 华超 16 队（全部为虚构球队，与任何真实俱乐部无关）
+const TEAM_POOL = [
+    { id: 'sh_kirin',        name: '上海麒麟',   emoji: '🦄', color: '#e63946', powerBase: 82, budgetBase: 8000, city: '上海', stadium: '麒麟体育场',     capacity: 45000 },
+    { id: 'qilu_fenghuo',    name: '齐鲁烽火',   emoji: '🔥', color: '#ff6b35', powerBase: 80, budgetBase: 7000, city: '济南', stadium: '泉城体育中心',   capacity: 56000 },
+    { id: 'bj_xuanwu',       name: '北京玄武',   emoji: '🐢', color: '#2ed573', powerBase: 78, budgetBase: 6500, city: '北京', stadium: '玄武体育场',     capacity: 68000 },
+    { id: 'sh_kunpeng',      name: '上海鲲鹏',   emoji: '🕊️', color: '#4dabf7', powerBase: 77, budgetBase: 6000, city: '上海', stadium: '鲲鹏体育场',     capacity: 42000 },
+    { id: 'wh_xinghuo',      name: '武汉星火',   emoji: '✨', color: '#f0c040', powerBase: 75, budgetBase: 5500, city: '武汉', stadium: '星火体育中心',   capacity: 54000 },
+    { id: 'cd_jinguan',      name: '成都锦官',   emoji: '🎋', color: '#ffa94d', powerBase: 74, budgetBase: 5000, city: '成都', stadium: '锦官体育公园',   capacity: 50000 },
+    { id: 'zj_qiantang',     name: '浙江钱塘',   emoji: '🌊', color: '#20c997', powerBase: 72, budgetBase: 4500, city: '杭州', stadium: '钱塘体育中心',   capacity: 52000 },
+    { id: 'tj_bohai',        name: '天津渤海',   emoji: '⚓', color: '#ff6b6b', powerBase: 70, budgetBase: 4000, city: '天津', stadium: '渤海体育中心',   capacity: 54000 },
+    { id: 'cc_beiguo',       name: '长春北国',   emoji: '❄️', color: '#8b5e3c', powerBase: 68, budgetBase: 3500, city: '长春', stadium: '北国体育场',     capacity: 41000 },
+    { id: 'hn_zhongyuan',    name: '河南中原',   emoji: '🏛️', color: '#e67e22', powerBase: 67, budgetBase: 3200, city: '郑州', stadium: '中原体育场',     capacity: 30000 },
+    { id: 'dl_haiying',      name: '大连海鹰',   emoji: '🦅', color: '#1e90ff', powerBase: 66, budgetBase: 3000, city: '大连', stadium: '海鹰体育场',     capacity: 46000 },
+    { id: 'mz_weilong',      name: '梅州围龙',   emoji: '🏮', color: '#6c5ce7', powerBase: 65, budgetBase: 2800, city: '梅州', stadium: '围龙体育场',     capacity: 27000 },
+    { id: 'cz_yunhe',        name: '沧州运河',   emoji: '🚢', color: '#a29bfe', powerBase: 64, budgetBase: 2600, city: '沧州', stadium: '运河体育场',     capacity: 32000 },
+    { id: 'qd_qindao',       name: '青岛琴岛',   emoji: '🎹', color: '#fd79a8', powerBase: 63, budgetBase: 2400, city: '青岛', stadium: '琴岛体育场',     capacity: 30000 },
+    { id: 'nt_jianghai',     name: '南通江海',   emoji: '⛵', color: '#74b9ff', powerBase: 61, budgetBase: 2200, city: '南通', stadium: '江海体育场',     capacity: 26000 },
+    { id: 'sz_qianhai',      name: '深圳前海',   emoji: '💠', color: '#9b59b6', powerBase: 60, budgetBase: 2000, city: '深圳', stadium: '前海体育中心',   capacity: 32000 },
+];
+
+/* ---------- 杯赛 / 洲际赛事参赛队（均为虚构球队） ---------- */
+
+// 次级联赛球队（华夏杯参赛）
+const DIV2_POOL = [
+    { id: 'cq_wudu',       name: '重庆雾都',   emoji: '🌫️', power: 55 },
+    { id: 'gz_nanyue',     name: '广州南粤',   emoji: '🌴', power: 53 },
+    { id: 'ln_xueyuan',    name: '辽宁雪原',   emoji: '🏔️', power: 51 },
+    { id: 'sjz_yanzhao',   name: '石家庄燕赵', emoji: '🏹', power: 50 },
+    { id: 'gx_guilin',     name: '广西桂林',   emoji: '⛰️', power: 49 },
+    { id: 'nj_jinling',    name: '南京金陵',   emoji: '🏯', power: 48 },
+    { id: 'suz_yuanlin',   name: '苏州园林',   emoji: '🪷', power: 47 },
+    { id: 'yb_baishan',    name: '延边白山',   emoji: '🌲', power: 46 },
+];
+
+// 环亚冠军联赛 · 东亚赛区球队
+const ASIA_POOL = [
+    { id: 'seoul_eagles',   name: '首尔雄鹰',   emoji: '🇰🇷', country: '韩国',     power: 80 },
+    { id: 'busan_storm',    name: '釜山风暴',   emoji: '🇰🇷', country: '韩国',     power: 77 },
+    { id: 'yokohama_meteor',name: '横滨流星',   emoji: '🇯🇵', country: '日本',     power: 79 },
+    { id: 'nagoya_bolt',    name: '名古屋闪电', emoji: '🇯🇵', country: '日本',     power: 78 },
+    { id: 'kl_tigers',      name: '吉隆坡猛虎', emoji: '🇲🇾', country: '马来西亚', power: 74 },
+    { id: 'bangkok_elephant',name: '曼谷大象',  emoji: '🇹🇭', country: '泰国',     power: 73 },
+    { id: 'sydney_harbour', name: '悉尼港湾',   emoji: '🇦🇺', country: '澳大利亚', power: 72 },
+    { id: 'hanoi_star',     name: '河内之星',   emoji: '🇻🇳', country: '越南',     power: 69 },
+];
+
+// 环球杯 · 各大洲冠军（亚洲席位由环亚杯冠军占据）
+const WORLD_POOL = [
+    { id: 'iberia_atletico',  name: '伊比利亚竞技', emoji: '👑', country: '欧洲',   desc: '欧洲冠军',     power: 94 },
+    { id: 'rhine_united',     name: '莱茵联合',     emoji: '⚙️', country: '欧洲',   desc: '欧洲亚军',     power: 92 },
+    { id: 'rio_atletico',     name: '里约竞技',     emoji: '💃', country: '南美',   desc: '南美冠军',     power: 87 },
+    { id: 'cairo_star',       name: '开罗之星',     emoji: '🏜️', country: '非洲',   desc: '非洲冠军',     power: 81 },
+    { id: 'aztec_warriors',   name: '阿兹特克勇士', emoji: '🗿', country: '中北美', desc: '中北美冠军',   power: 79 },
+    { id: 'southpacific_utd', name: '南太平洋联',   emoji: '🐚', country: '大洋洲', desc: '大洋洲冠军',   power: 58 },
+];
+
+// 赛历：不同赛事的比赛落在不同联赛轮次之后（周中），互不撞车
+const CALENDAR = {
+    CUP_ROUNDS: [4, 9, 14, 19, 25],                  // 华夏杯 5 轮
+    ACL_LEAGUE_ROUNDS: [2, 5, 8, 11, 15, 18, 21, 24], // 环亚杯联赛阶段 8 轮
+    ACL_KO_ROUNDS: [26, 27, 28, 29],                 // 环亚杯 1/8、1/4、半决赛、决赛
+    CUP_STAGE_NAMES: ['第一轮', '1/8 决赛', '1/4 决赛', '半决赛', '决赛'],
+    ACL_KO_NAMES: ['1/8 决赛', '1/4 决赛', '半决赛', '决赛'],
+    CWC_NAMES: ['1/4 决赛', '半决赛', '决赛'],
+};
+
+// 赛事奖金（万）
+const COMP_PRIZE = {
+    CUP_ROUND_WIN: 80,
+    CUP_CHAMPION: 900,
+    ACL_WIN: 120,
+    ACL_DRAW: 60,
+    ACL_KO: [300, 450, 700, 2500],       // 进入 1/8、1/4、半决赛、夺冠
+    CWC_ENTRY: 1000,
+    CWC_ROUND_WIN: [1500, 2000],
+    CWC_CHAMPION: 6000,
+};
+
+
+// 中文名库
+const SURNAMES = ['李', '王', '张', '刘', '陈', '杨', '赵', '黄', '周', '吴', '徐', '孙', '胡', '朱', '高', '林', '何', '郭', '马',
+    '罗', '郑', '梁', '宋', '谢', '唐', '韩', '冯', '于', '董', '萧', '程', '曹', '袁', '邓', '许', '傅', '沈', '曾', '彭', '吕',
+    '苏', '卢', '蒋', '蔡', '贾', '丁', '魏', '薛', '叶', '阎'];
+
+const GIVEN_NAMES = ['伟', '强', '磊', '涛', '鹏', '浩', '明', '超', '杰', '飞', '勇', '军', '龙', '辉', '宇', '峰', '博', '毅', '恒',
+    '晨', '阳', '宁', '鑫', '文', '哲', '彬', '帅', '凯', '锐', '睿', '彦', '昊', '然', '泽', '轩', '铭', '豪', '畅', '翔', '岩',
+    '刚', '志', '建国', '建华', '志强', '文博', '子涵', '一鸣', '天宇', '浩然'];
+
+// 外援名库（全部为虚构姓名，与任何真实球员无关；国籍与姓名绑定）
+const FOREIGN_NAMES = [
+    { name: 'Rafael Souza', nat: '巴西' }, { name: 'Bruno Cardoso', nat: '巴西' },
+    { name: 'Lucas Barbosa', nat: '巴西' }, { name: 'Thiago Moraes', nat: '巴西' },
+    { name: 'Matías Ferreyra', nat: '阿根廷' }, { name: 'Nicolás Aguirre', nat: '阿根廷' },
+    { name: 'Julián Ospina', nat: '哥伦比亚' }, { name: 'Rui Marques', nat: '葡萄牙' },
+    { name: 'Diogo Neves', nat: '葡萄牙' }, { name: 'Álvaro Pineda', nat: '西班牙' },
+    { name: 'Luca Ferraro', nat: '意大利' }, { name: 'Jonas Krüger', nat: '德国' },
+    { name: 'Nikola Vasić', nat: '塞尔维亚' }, { name: 'Stefan Đorđević', nat: '塞尔维亚' },
+    { name: 'Marko Barišić', nat: '克罗地亚' }, { name: 'Éric Mballa', nat: '喀麦隆' },
+    { name: 'Moussa Diagne', nat: '塞内加尔' }, { name: 'Emeka Obi', nat: '尼日利亚' },
+    { name: 'Chidi Okonkwo', nat: '尼日利亚' }, { name: 'Youssef Belkacem', nat: '摩洛哥' },
+    { name: 'Seo Jun-ho', nat: '韩国' }, { name: 'Kang Tae-yang', nat: '韩国' },
+    { name: 'Sato Ren', nat: '日本' }, { name: 'Kondo Yuto', nat: '日本' },
+    { name: 'Jack Callahan', nat: '澳大利亚' }, { name: 'Somchai Prasert', nat: '泰国' },
+    { name: 'Nguyen Van Hung', nat: '越南' },
+];
+
+/* ==================== 二、全局状态 ==================== */
+
+let gameState = createEmptyState();
+let currentPanel = 'dashboard';
+let __seq = 0;
+
+function createEmptyState() {
+    return {
+        version: SAVE_VERSION,
+        season: 1,
+        userTeamId: null,
+        userTeam: null,        // 运行时引用，不写入存档
+        teams: [],
+        externalTeams: [],     // 次级联赛 / 亚洲 / 世界球队（不参与华超积分榜）
+        standings: [],
+        schedule: [],          // schedule[roundIndex] = [{home,away}, ...]
+        round: 1,
+        totalRounds: (TEAM_POOL.length - 1) * 2,
+        roundResults: null,    // 本轮赛果（驱动比赛日面板，可随存档恢复）
+        finances: {},
+        tactics: 'balanced',
+        newsLog: [],
+        transferMarket: [],
+        seasonHistory: [],
+        userForm: [],          // 最近 6 场：'W' | 'D' | 'L'
+        seasonComplete: false,
+        lastSeasonSummary: null,
+        cup: null,             // 华夏杯
+        acl: null,             // 环亚冠军联赛
+        cwc: null,             // 环球杯
+    };
+}
+
+/* ==================== 三、通用工具 ==================== */
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randFloat(min, max) { return Math.random() * (max - min) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function clamp(v, min, max) { return v < min ? min : v > max ? max : v; }
+function round5(v) { return Math.round(v / 5) * 5; }
+
+function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+}
+
+function uid(prefix) {
+    __seq += 1;
+    return prefix + '_' + Date.now().toString(36) + '_' + __seq.toString(36);
+}
+
+// 加权随机：items 与 weights 等长
+function weightedPick(items, weights) {
+    let total = 0;
+    for (let i = 0; i < weights.length; i++) total += Math.max(0, weights[i]);
+    if (total <= 0) return items[Math.floor(Math.random() * items.length)];
+    let r = Math.random() * total;
+    for (let i = 0; i < items.length; i++) {
+        r -= Math.max(0, weights[i]);
+        if (r <= 0) return items[i];
+    }
+    return items[items.length - 1];
+}
+
+function formatMoney(wan) {
+    const n = Number(wan) || 0;
+    const sign = n < 0 ? '-' : '';
+    const abs = Math.abs(n);
+    if (abs >= 10000) return sign + (abs / 10000).toFixed(2).replace(/\.?0+$/, '') + ' 亿';
+    return sign + Math.round(abs) + ' 万';
+}
+
+function stars(ability, total) {
+    const n = total || 9;
+    const got = clamp(Math.round(ability / 10), 0, n);
+    return '★'.repeat(got) + '☆'.repeat(n - got);
+}
+
+function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function poissonSample(lambda) {
+    const L = Math.exp(-Math.max(0.01, lambda));
+    let k = 0;
+    let p = 1;
+    do {
+        k++;
+        p *= Math.random();
+    } while (p > L && k < 40);
+    return k - 1;
+}
+
+/* ==================== 四、球员生成与估值 ==================== */
+
+// 球员身价：整体下调，让俱乐部资金足以在转会市场正常运作
+// 能力 60 ≈ 380 万，70 ≈ 855 万，80 ≈ 1520 万，90 ≈ 2375 万
+function calcValue(p) {
+    const core = Math.pow(Math.max(1, p.ability - 40), 2) * 0.95;
+    const pot = (p.potential - p.ability) * 20;
+    const ageF = p.age <= 21 ? 1.30 : p.age <= 25 ? 1.15 : p.age <= 29 ? 1.00 : p.age <= 32 ? 0.85 : 0.60;
+    return Math.max(40, round5((core + pot) * ageF));
+}
+
+function calcWage(p) { return Math.max(1, Math.round(p.value * ECON.WAGE_RATE)); }
+
+function refreshPlayerValue(p) {
+    p.value = calcValue(p);
+    p.wage = calcWage(p);
+}
+
+function makePlayer(power, position, isForeign) {
+    const fname = isForeign ? pick(FOREIGN_NAMES) : null;
+    const name = fname ? fname.name : pick(SURNAMES) + pick(GIVEN_NAMES);
+    const age = isForeign ? rand(21, 32) : rand(17, 34);
+    const ability = clamp(Math.round(power + rand(-16, 9) + (isForeign ? rand(2, 12) : 0)), 35, 92);
+    const gap = age <= 20 ? rand(6, 20) : age <= 24 ? rand(3, 12) : age <= 27 ? rand(0, 6) : rand(0, 2);
+    const p = {
+        id: uid('p'),
+        name: name,
+        nationality: fname ? fname.nat : '中国',
+        position: position,
+        age: age,
+        ability: ability,
+        potential: clamp(ability + gap, ability, 96),
+        isForeign: !!isForeign,
+        goals: 0,
+        assists: 0,
+        apps: 0,
+        ratingSum: 0,
+        morale: rand(62, 92),
+        fitness: rand(78, 96),
+        injury: 0,
+    };
+    refreshPlayerValue(p);
+    return p;
+}
+
+// 阵容结构：保证每个位置都有足够人手
+function buildSquad(power) {
+    const need = { GK: 2, DF: 7, MF: 7, FW: 5 };
+    const target = rand(22, 25);
+    const posList = [];
+    POS_LIST.forEach(function (pos) {
+        for (let i = 0; i < need[pos]; i++) posList.push(pos);
+    });
+    while (posList.length < target) posList.push(pick(['DF', 'MF', 'MF', 'FW']));
+
+    const players = posList.map(function (pos) { return makePlayer(power, pos, false); });
+
+    // 外援名额：优先给锋线/中场
+    const weightOf = function (i) {
+        const pos = players[i].position;
+        return pos === 'FW' ? 0 : pos === 'MF' ? 1 : pos === 'DF' ? 2 : 3;
+    };
+    const order = shuffle(players.map(function (_, i) { return i; })).sort(function (a, b) {
+        return weightOf(a) - weightOf(b);
+    });
+    const fCount = rand(3, ECON.MAX_FOREIGN);
+    for (let i = 0; i < fCount && i < order.length; i++) {
+        const idx = order[i];
+        players[idx] = makePlayer(power, players[idx].position, true);
+    }
+    return players;
+}
+
+/* ==================== 五、赛程（标准循环赛） ==================== */
+
+// 圆桌轮转法：16 队 → 15 轮单循环 + 15 轮主客互换 = 30 轮，每轮每队恰好一场
+function buildSchedule(teamIds) {
+    const ids = shuffle(teamIds.slice());
+    const n = ids.length;
+    let list = ids.slice();
+    const firstHalf = [];
+
+    for (let r = 0; r < n - 1; r++) {
+        const pairs = [];
+        for (let i = 0; i < n / 2; i++) {
+            const a = list[i];
+            const b = list[n - 1 - i];
+            pairs.push(((r + i) % 2 === 0) ? { home: a, away: b } : { home: b, away: a });
+        }
+        firstHalf.push(pairs);
+        list = [list[0]].concat([list[n - 1]], list.slice(1, n - 1));
+    }
+
+    const secondHalf = firstHalf.map(function (rd) {
+        return rd.map(function (m) { return { home: m.away, away: m.home }; });
+    });
+    return firstHalf.concat(secondHalf);
+}
+
+/* ==================== 六、实力评估与首发 ==================== */
+
+// 有效能力：体能/士气会明显影响发挥
+function effAbility(p) {
+    const fit = 0.86 + 0.14 * (clamp(p.fitness, 0, 100) / 100);
+    const mor = 0.94 + 0.06 * (clamp(p.morale, 0, 100) / 100);
+    return p.ability * fit * mor;
+}
+
+function isAvailable(p) { return !p.injury || p.injury <= 0; }
+
+// 选出最佳 11 人（4-4-2），缺位置时由剩余球员顶上
+function pickLineup(team) {
+    if (!team || !team.players || team.players.length === 0) return [];
+    const pool = team.players.filter(isAvailable);
+    if (pool.length === 0) return [];
+
+    const need = { GK: 1, DF: 4, MF: 4, FW: 2 };
+    const chosen = [];
+    const used = {};
+
+    POS_LIST.forEach(function (pos) {
+        const cands = pool
+            .filter(function (p) { return p.position === pos && !used[p.id]; })
+            .sort(function (a, b) { return effAbility(b) - effAbility(a); });
+        for (let i = 0; i < need[pos] && i < cands.length; i++) {
+            chosen.push(cands[i]);
+            used[cands[i].id] = true;
+        }
+    });
+
+    if (chosen.length < ECON.MAX_LINEUP) {
+        const rest = pool
+            .filter(function (p) { return !used[p.id]; })
+            .sort(function (a, b) { return effAbility(b) - effAbility(a); });
+        for (let i = 0; i < rest.length && chosen.length < ECON.MAX_LINEUP; i++) {
+            chosen.push(rest[i]);
+            used[rest[i].id] = true;
+        }
+    }
+    return chosen;
+}
+
+// 由首发计算攻/守评分
+function teamRatings(team) {
+    const xi = pickLineup(team);
+    if (xi.length === 0) return { attack: 40, defense: 40, xi: xi, overall: 40 };
+
+    const byPos = { GK: [], DF: [], MF: [], FW: [] };
+    let sum = 0;
+    xi.forEach(function (p) {
+        byPos[p.position].push(effAbility(p));
+        sum += effAbility(p);
+    });
+    const avgOf = function (arr) {
+        if (!arr.length) return null;
+        return arr.reduce(function (s, v) { return s + v; }, 0) / arr.length;
+    };
+    const fallback = sum / xi.length;
+    const gk = avgOf(byPos.GK) === null ? fallback * 0.92 : avgOf(byPos.GK);
+    const df = avgOf(byPos.DF) === null ? fallback * 0.92 : avgOf(byPos.DF);
+    const mf = avgOf(byPos.MF) === null ? fallback * 0.95 : avgOf(byPos.MF);
+    const fw = avgOf(byPos.FW) === null ? fallback * 0.95 : avgOf(byPos.FW);
+
+    const attack = fw * 0.50 + mf * 0.33 + df * 0.10 + gk * 0.07;
+    const defense = gk * 0.30 + df * 0.44 + mf * 0.23 + fw * 0.03;
+    return {
+        attack: Math.round(attack * 10) / 10,
+        defense: Math.round(defense * 10) / 10,
+        overall: Math.round((attack + defense) / 2),
+        xi: xi,
+    };
+}
+/* ==================== 七、球队查询与积分榜 ==================== */
+
+const TACTICS = {
+    balanced: { atk: 1.00, def: 1.00, label: '均衡' },
+    attack:   { atk: 1.07, def: 0.94, label: '进攻' },
+    defense:  { atk: 0.93, def: 1.08, label: '防守' },
+};
+
+// 所有可参赛球队 = 华超 16 队 + 外部球队（次级联赛 / 亚洲 / 世界）
+function allTeams() {
+    return gameState.teams.concat(gameState.externalTeams || []);
+}
+
+function teamById(id) {
+    for (let i = 0; i < gameState.teams.length; i++) {
+        if (gameState.teams[i].id === id) return gameState.teams[i];
+    }
+    const ext = gameState.externalTeams || [];
+    for (let i = 0; i < ext.length; i++) {
+        if (ext[i].id === id) return ext[i];
+    }
+    return null;
+}
+
+function isUserTeamId(id) { return !!id && id === gameState.userTeamId; }
+
+function getUserTeam() {
+    if (!gameState.userTeamId) return null;
+    return teamById(gameState.userTeamId);
+}
+
+// 让 gameState.userTeam 始终指向 teams 里的同一个对象（读档后必须重连）
+function syncUserTeam() {
+    gameState.userTeam = getUserTeam();
+    return gameState.userTeam;
+}
+
+function findPlayerById(id) {
+    const pool = allTeams();
+    for (let i = 0; i < pool.length; i++) {
+        const ps = pool[i].players;
+        for (let j = 0; j < ps.length; j++) {
+            if (ps[j].id === id) return ps[j];
+        }
+    }
+    for (let i = 0; i < gameState.transferMarket.length; i++) {
+        if (gameState.transferMarket[i].id === id) return gameState.transferMarket[i];
+    }
+    return null;
+}
+
+function teamOfPlayer(id) {
+    const pool = allTeams();
+    for (let i = 0; i < pool.length; i++) {
+        const ps = pool[i].players;
+        for (let j = 0; j < ps.length; j++) {
+            if (ps[j].id === id) return pool[i];
+        }
+    }
+    return null;
+}
+
+function standingOf(teamId) {
+    for (let i = 0; i < gameState.standings.length; i++) {
+        if (gameState.standings[i].teamId === teamId) return gameState.standings[i];
+    }
+    return null;
+}
+
+function sortStandings() {
+    return gameState.standings.slice().sort(function (a, b) {
+        if (b.points !== a.points) return b.points - a.points;
+        const gdA = a.goalsFor - a.goalsAgainst;
+        const gdB = b.goalsFor - b.goalsAgainst;
+        if (gdB !== gdA) return gdB - gdA;
+        if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
+        return String(a.teamName).localeCompare(String(b.teamName), 'zh-CN');
+    });
+}
+
+function getRank(teamId) {
+    const sorted = sortStandings();
+    for (let i = 0; i < sorted.length; i++) {
+        if (sorted[i].teamId === teamId) return i + 1;
+    }
+    return sorted.length;
+}
+
+function updateStanding(teamId, gf, ga, result) {
+    const s = standingOf(teamId);
+    if (!s) return;
+    s.played++;
+    s.goalsFor += gf;
+    s.goalsAgainst += ga;
+    // 近况（最多 6 场）
+    if (!s.form) s.form = [];
+    s.form.push(result === 'win' ? 'W' : result === 'draw' ? 'D' : 'L');
+    if (s.form.length > 6) s.form.shift();
+    if (result === 'win') { s.wins++; s.points += 3; }
+    else if (result === 'draw') { s.draws++; s.points += 1; }
+    else { s.losses++; }
+}
+
+/* ==================== 八、比赛引擎 ==================== */
+
+function pickScorer(xi) {
+    if (!xi.length) return null;
+    const weights = xi.map(function (p) {
+        const base = p.position === 'FW' ? 10 : p.position === 'MF' ? 5 : p.position === 'DF' ? 1.6 : 0.05;
+        return base * (0.6 + p.ability / 100);
+    });
+    return weightedPick(xi, weights);
+}
+
+function pickAssist(xi, scorerId) {
+    const cands = xi.filter(function (p) { return p.id !== scorerId; });
+    if (!cands.length) return null;
+    const weights = cands.map(function (p) {
+        const base = p.position === 'MF' ? 8 : p.position === 'FW' ? 5 : p.position === 'DF' ? 2 : 0.1;
+        return base * (0.6 + p.ability / 100);
+    });
+    return weightedPick(cands, weights);
+}
+
+function makeGoalEvent(side, atkXI, defXI) {
+    // 3% 乌龙球
+    if (defXI.length && Math.random() < 0.03) {
+        const def = weightedPick(defXI, defXI.map(function (p) {
+            return p.position === 'DF' ? 5 : p.position === 'GK' ? 1 : 2;
+        }));
+        return { side: side, min: 0, scorerId: def.id, scorerName: def.name, assistId: null, assistName: '', og: true };
+    }
+    const scorer = pickScorer(atkXI);
+    if (!scorer) return { side: side, min: 0, scorerId: null, scorerName: '未知球员', assistId: null, assistName: '', og: false };
+    let assist = null;
+    if (Math.random() < 0.68) assist = pickAssist(atkXI, scorer.id);
+    return {
+        side: side, min: 0,
+        scorerId: scorer.id, scorerName: scorer.name,
+        assistId: assist ? assist.id : null, assistName: assist ? assist.name : '', og: false,
+    };
+}
+
+// 返回纯数据对象（不含球员引用），可直接存入存档
+function playMatch(home, away) {
+    const hr = teamRatings(home);
+    const ar = teamRatings(away);
+    const isUserHome = home.id === gameState.userTeamId;
+    const isUserAway = away.id === gameState.userTeamId;
+
+    let hAtk = hr.attack * 1.06, hDef = hr.defense * 1.03;
+    let aAtk = ar.attack * 0.97, aDef = ar.defense * 0.99;
+
+    // 战术只影响玩家执教球队
+    const tac = TACTICS[gameState.tactics] || TACTICS.balanced;
+    if (isUserHome) { hAtk *= tac.atk; hDef *= tac.def; }
+    if (isUserAway) { aAtk *= tac.atk; aDef *= tac.def; }
+
+    const BASE = 1.28;
+    let xgH = BASE * Math.pow(hAtk / Math.max(35, aDef), 1.45) * 1.12;
+    let xgA = BASE * Math.pow(aAtk / Math.max(35, hDef), 1.45) * 0.94;
+    xgH = clamp(xgH * randFloat(0.78, 1.24), 0.18, 4.6);
+    xgA = clamp(xgA * randFloat(0.78, 1.24), 0.18, 4.6);
+
+    const hg = Math.min(poissonSample(xgH), 7);
+    const ag = Math.min(poissonSample(xgA), 7);
+
+    const timeline = [];
+    for (let i = 0; i < hg; i++) timeline.push(makeGoalEvent('home', hr.xi, ar.xi));
+    for (let i = 0; i < ag; i++) timeline.push(makeGoalEvent('away', ar.xi, hr.xi));
+    timeline.forEach(function (e) { e.min = rand(1, 90); });
+    timeline.sort(function (a, b) { return a.min - b.min; });
+
+    return {
+        round: gameState.round,
+        homeId: home.id, awayId: away.id,
+        homeName: home.name, awayName: away.name,
+        homeEmoji: home.emoji, awayEmoji: away.emoji,
+        hg: hg, ag: ag,
+        xgH: Math.round(xgH * 100) / 100, xgA: Math.round(xgA * 100) / 100,
+        timeline: timeline,
+        homeXI: hr.xi.map(function (p) { return p.id; }),
+        awayXI: ar.xi.map(function (p) { return p.id; }),
+        isUser: isUserHome || isUserAway,
+    };
+}
+
+function matchRating(p, goals, assists, result) {
+    let r = 6.2 + goals * 0.9 + assists * 0.55;
+    if (result === 'win') r += 0.45;
+    else if (result === 'loss') r -= 0.35;
+    else r += 0.05;
+    r += randFloat(-0.45, 0.45);
+    return Math.round(clamp(r, 4.0, 10.0) * 10) / 10;
+}
+
+function settleTeamCondition(team, gf, ga, contrib, xiIds) {
+    const result = gf > ga ? 'win' : gf === ga ? 'draw' : 'loss';
+    const xiMap = {};
+    xiIds.forEach(function (id) { xiMap[id] = true; });
+
+    team.players.forEach(function (p) {
+        const played = !!xiMap[p.id];
+        if (played) {
+            const c = contrib[p.id] || { g: 0, a: 0 };
+            p.apps++;
+            p.ratingSum += matchRating(p, c.g, c.a, result);
+            p.fitness = clamp(p.fitness - rand(10, 22), 25, 100);
+            // 2.5% 受伤，停赛 1-4 轮
+            if (p.injury <= 0 && Math.random() < 0.025) {
+                p.injury = rand(1, 4);
+                if (team.id === gameState.userTeamId) addNews('🏥 ' + p.name + ' 在比赛中受伤，预计缺席 ' + p.injury + ' 轮');
+            }
+        } else {
+            p.fitness = clamp(p.fitness + rand(10, 20), 25, 100);
+        }
+        const dm = result === 'win' ? 7 : result === 'draw' ? 1 : -6;
+        p.morale = clamp(p.morale + dm, 25, 100);
+    });
+}
+
+// 通用结算：进球/助攻/评分/体能/伤病/士气（联赛、杯赛、环亚杯、环球杯都调用）
+function applyMatchEffects(m) {
+    const home = teamById(m.homeId);
+    const away = teamById(m.awayId);
+    if (!home || !away) return;
+
+    // 统计进球 / 助攻
+    const contrib = {};
+    m.timeline.forEach(function (e) {
+        if (!e.og && e.scorerId) {
+            const s = findPlayerById(e.scorerId);
+            if (s) s.goals = (s.goals || 0) + 1;
+            if (!contrib[e.scorerId]) contrib[e.scorerId] = { g: 0, a: 0 };
+            contrib[e.scorerId].g++;
+        }
+        if (e.assistId) {
+            const a = findPlayerById(e.assistId);
+            if (a) a.assists = (a.assists || 0) + 1;
+            if (!contrib[e.assistId]) contrib[e.assistId] = { g: 0, a: 0 };
+            contrib[e.assistId].a++;
+        }
+    });
+
+    settleTeamCondition(home, m.hg, m.ag, contrib, m.homeXI);
+    settleTeamCondition(away, m.ag, m.hg, contrib, m.awayXI);
+}
+
+// 联赛：额外更新积分榜
+function applyResult(m) {
+    const home = teamById(m.homeId);
+    const away = teamById(m.awayId);
+    if (!home || !away) return;
+
+    const hRes = m.hg > m.ag ? 'win' : m.hg === m.ag ? 'draw' : 'loss';
+    const aRes = hRes === 'win' ? 'loss' : hRes === 'draw' ? 'draw' : 'win';
+    updateStanding(home.id, m.hg, m.ag, hRes);
+    updateStanding(away.id, m.ag, m.hg, aRes);
+
+    applyMatchEffects(m);
+}
+
+/* ==================== 九、经济系统 ==================== */
+
+function addFinance(fin, type, amount, desc) {
+    const amt = Math.round(amount);
+    if (type === 'income') {
+        fin.balance += amt;
+        fin.income += amt;
+    } else {
+        fin.balance -= amt;
+        fin.expense += amt;
+    }
+    fin.history.push({ desc: desc, amount: amt, type: type, round: gameState.round, season: gameState.season });
+    if (fin.history.length > 200) fin.history.shift();
+}
+
+function wageBillOf(team) {
+    return team.players.reduce(function (s, p) { return s + (p.wage || 0); }, 0);
+}
+
+// 球队当前实力（主力 11 人平均能力）——用于商业价值，而非固定的模板值
+function clubStrength(team) {
+    if (!team || !team.players || !team.players.length) return team && team.powerBase ? team.powerBase : 60;
+    const sorted = team.players.map(function (p) { return p.ability; }).sort(function (a, b) { return b - a; });
+    const top = sorted.slice(0, Math.min(11, sorted.length));
+    return top.reduce(function (s, v) { return s + v; }, 0) / top.length;
+}
+
+// 商业价值系数：随球队「当前实力」提升，形成「变强 → 收入提高」的正循环，
+// 避免强队工资随身价上涨而收入原地不动（原版倒挂问题）
+function commercialFactor(team) {
+    if (!team) return 1;
+    return clamp(0.45 + (clubStrength(team) - 55) / 30, 0.45, 1.90);
+}
+
+function seasonTicketIncome(team, rank) {
+    const rankF = 1 + (16 - clamp(rank, 1, 16)) / 16;   // 1.06 ~ 1.94
+    return Math.round(ECON.SEASON_TICKET * commercialFactor(team) * rankF);
+}
+
+// 票价：关注度高的球队定价也更高
+function ticketPriceOf(team) {
+    const base = rand(ECON.TICKET_MIN, ECON.TICKET_MAX);
+    return Math.round(base * (0.75 + commercialFactor(team) * 0.25));
+}
+
+function settleRoundFinance(userMatch) {
+    const team = getUserTeam();
+    if (!team) return null;
+    const fin = gameState.finances[team.id];
+    const r = gameState.round;
+
+    // 转播分成（每轮固定）
+    addFinance(fin, 'income', ECON.TV_PER_ROUND, '第' + r + '轮 转播分成');
+
+    // 门票（只有主场才有）
+    let attendance = 0;
+    if (userMatch && userMatch.homeId === team.id) {
+        const rank = getRank(team.id);
+        const rate = clamp(
+            0.30 + commercialFactor(team) * 0.34 + (rank <= 4 ? 0.12 : 0) +
+            (gameState.userForm[0] === 'W' ? 0.05 : 0) + randFloat(-0.07, 0.07),
+            0.28, 0.97
+        );
+        attendance = Math.round(team.capacity * rate);
+        const price = ticketPriceOf(team);
+        const income = Math.round(attendance * price / 10000);
+        addFinance(fin, 'income', income, '第' + r + '轮 主场门票（' + attendance.toLocaleString('zh-CN') + ' 人 × ' + price + ' 元）');
+    }
+
+    // 工资（每轮结算）
+    const wageBill = wageBillOf(team);
+    addFinance(fin, 'expense', wageBill, '第' + r + '轮 球员薪资');
+
+    // 运营支出（差旅、青训、球场维护）——固定成本，弱队同样要承担
+    const operation = Math.round(ECON.OPERATION_PER_ROUND + team.capacity * ECON.OPERATION_CAP);
+    addFinance(fin, 'expense', operation, '第' + r + '轮 俱乐部运营支出');
+
+    return { attendance: attendance, wageBill: wageBill, operation: operation };
+}
+
+/* ==================== 十、赛季流程 ==================== */
+
+function addNews(msg) {
+    const tag = gameState.seasonComplete
+        ? '第' + gameState.season + '赛季 · 结束'
+        : '第' + gameState.season + '赛季 · 第' + gameState.round + '轮';
+    gameState.newsLog.unshift({ msg: msg, time: tag });
+    if (gameState.newsLog.length > 40) gameState.newsLog.pop();
+}
+
+function showToast(msg, isError, isInfo) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : isInfo ? ' info' : '');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    let guard = 0;
+    while (container.children.length > 4 && container.firstChild && guard++ < 20) {
+        container.removeChild(container.firstChild);
+    }
+    setTimeout(function () {
+        toast.classList.add('hide');
+        setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 320);
+    }, 2600);
+}
+
+function updateUserForm(userMatch) {
+    if (!userMatch) return;
+    const isHome = userMatch.homeId === gameState.userTeamId;
+    const gf = isHome ? userMatch.hg : userMatch.ag;
+    const ga = isHome ? userMatch.ag : userMatch.hg;
+    gameState.userForm.unshift(gf > ga ? 'W' : gf === ga ? 'D' : 'L');
+    if (gameState.userForm.length > 6) gameState.userForm.pop();
+}
+
+function userMatchOf(roundResults) {
+    if (!roundResults) return null;
+    for (let i = 0; i < roundResults.fixtures.length; i++) {
+        const m = roundResults.fixtures[i];
+        if (m.homeId === gameState.userTeamId || m.awayId === gameState.userTeamId) return m;
+    }
+    return null;
+}
+
+function simulateRound() {
+    if (!gameState.userTeam) { showToast('请先选择执教球队', true); return; }
+    if (gameState.seasonComplete) { showToast('赛季已结束，请开启新赛季', true); return; }
+    if (gameState.roundResults) { showToast('本轮已结束，请点击「进入下一轮」', true); return; }
+
+    const fixtures = gameState.schedule[gameState.round - 1] || [];
+    if (!fixtures.length) { showToast('赛程数据缺失，请重开游戏', true); return; }
+
+    const results = [];
+    let userMatch = null;
+    fixtures.forEach(function (f) {
+        const home = teamById(f.home);
+        const away = teamById(f.away);
+        if (!home || !away) return;
+        const m = playMatch(home, away);
+        applyResult(m);
+        results.push(m);
+        if (m.isUser) userMatch = m;
+    });
+
+    // 周中赛事：华夏杯 / 环亚杯
+    const round = gameState.round;
+    let cupResults = null;
+    let aclResults = null;
+    if (CALENDAR.CUP_ROUNDS.indexOf(round) >= 0 && gameState.cup && !gameState.cup.done) {
+        cupResults = simulateCupRound();
+    }
+    if (CALENDAR.ACL_LEAGUE_ROUNDS.indexOf(round) >= 0 && gameState.acl && !gameState.acl.leagueDone) {
+        aclResults = simulateACLLeagueRound();
+    } else if (CALENDAR.ACL_KO_ROUNDS.indexOf(round) >= 0 && gameState.acl && gameState.acl.leagueDone) {
+        aclResults = simulateACLKO();
+    }
+
+    gameState.roundResults = {
+        round: round,
+        fixtures: results,
+        cup: cupResults,
+        acl: aclResults,
+    };
+
+    // 用户比赛结果处理（先算近况，门票收入会参考近况）
+    if (userMatch) {
+        updateUserForm(userMatch);
+        const isHome = userMatch.homeId === gameState.userTeamId;
+        const gf = isHome ? userMatch.hg : userMatch.ag;
+        const ga = isHome ? userMatch.ag : userMatch.hg;
+        const opp = isHome ? userMatch.awayName : userMatch.homeName;
+        const txt = gf > ga ? '🏆 胜利' : gf === ga ? '🤝 平局' : '😞 失利';
+        addNews('第' + round + '轮：' + gameState.userTeam.name + ' ' + gf + '-' + ga + ' ' + opp + '　' + txt);
+    }
+
+    // 杯赛 / 环亚杯 主场门票收入
+    compMatchesUserPlayed(cupResults).forEach(function (m) {
+        if (m.homeId === gameState.userTeamId) settleCupGate(m, 'cup');
+    });
+    compMatchesUserPlayed(aclResults).forEach(function (m) {
+        if (m.homeId === gameState.userTeamId) settleCupGate(m, 'acl');
+    });
+
+    const finInfo = settleRoundFinance(userMatch);
+    if (finInfo && finInfo.attendance > 0) {
+        addNews('🎫 主场观众 ' + finInfo.attendance.toLocaleString('zh-CN') + ' 人，门票收入已入账');
+    }
+    const fin = gameState.finances[gameState.userTeam.id];
+    if (fin && fin.balance < 0) {
+        addNews('⚠️ 俱乐部余额为负（' + formatMoney(fin.balance) + '），请尽快出售球员或争取成绩');
+    }
+
+    commit();
+
+    // 赛季内所有赛事结束后才提示赛季结束
+    if (gameState.round >= gameState.totalRounds) {
+        showToast('第' + round + '轮结束，联赛收官！', false, true);
+    } else {
+        showToast('第' + round + '轮全部比赛结束', false, true);
+    }
+}
+
+// 杯赛 / 环亚杯主场门票（规模小于联赛，环亚杯按实际票价折算）
+function settleCupGate(m, tag) {
+    const team = getUserTeam();
+    if (!team) return;
+    const isACL = tag === 'acl';
+    const rate = clamp(0.28 + commercialFactor(team) * 0.22, 0.22, 0.70);
+    const attendance = Math.round(team.capacity * rate);
+    const price = rand(ECON.TICKET_MIN, ECON.TICKET_MAX);
+    const income = Math.round(attendance * price / 10000 * (isACL ? 0.75 : 0.65));
+    addFinance(gameState.finances[team.id], 'income', income,
+        (isACL ? '环亚杯' : '华夏杯') + '主场门票（' + attendance.toLocaleString('zh-CN') + ' 人）');
+}
+
+function nextRound() {
+    if (!gameState.roundResults) { showToast('请先模拟本轮比赛', true); return; }
+    if (gameState.seasonComplete) { showToast('赛季已结束，请开启新赛季', true); return; }
+
+    if (gameState.round >= gameState.totalRounds) { endSeason(); return; }
+
+    // 轮间恢复
+    gameState.teams.forEach(function (t) {
+        t.players.forEach(function (p) {
+            if (p.injury > 0) p.injury--;
+            p.fitness = clamp(p.fitness + 8, 25, 100);
+        });
+    });
+
+    gameState.round++;
+    gameState.roundResults = null;
+
+    // 赞助收入（规模随商业价值浮动，大市场/强队商业价值更高）
+    if (gameState.round % ECON.SPONSOR_EVERY === 0 && gameState.userTeam) {
+        const amount = Math.round(rand(ECON.SPONSOR_MIN, ECON.SPONSOR_MAX) * commercialFactor(gameState.userTeam));
+        addFinance(gameState.finances[gameState.userTeam.id], 'income', amount, '赞助商款项');
+        addNews('🤝 收到赞助商款项：' + formatMoney(amount));
+    }
+
+    // 转会市场刷新
+    if (gameState.round % ECON.MARKET_REFRESH_EVERY === 1) refreshTransferMarket(false);
+
+    addNews('📅 进入第' + gameState.round + '轮');
+    commit();
+}
+
+function endSeason() {
+    const team = getUserTeam();
+    if (!team) return;
+    gameState.seasonComplete = true;
+    const rank = getRank(team.id);
+    const st = standingOf(team.id);
+    const prize = ECON.PRIZE[Math.min(rank - 1, ECON.PRIZE.length - 1)] || 200;
+    const fin = gameState.finances[team.id];
+    addFinance(fin, 'income', prize, '赛季排名奖金（第 ' + rank + ' 名）');
+
+    const summary = {
+        season: gameState.season,
+        teamName: team.name,
+        teamEmoji: team.emoji,
+        rank: rank,
+        points: st ? st.points : 0,
+        wins: st ? st.wins : 0,
+        draws: st ? st.draws : 0,
+        losses: st ? st.losses : 0,
+        goalsFor: st ? st.goalsFor : 0,
+        goalsAgainst: st ? st.goalsAgainst : 0,
+        prize: prize,
+        balance: fin.balance,
+        topScorer: topScorers(1, team.id)[0] || null,
+        cupResult: describeCupRun(team.id),
+        aclResult: describeACLRun(team.id),
+        cupWinner: gameState.cup && gameState.cup.winner ? teamById(gameState.cup.winner).name : '—',
+        aclWinner: gameState.acl && gameState.acl.winner ? teamById(gameState.acl.winner).name : '—',
+    };
+    gameState.lastSeasonSummary = summary;
+    gameState.seasonHistory.push({
+        season: summary.season, teamName: summary.teamName, rank: rank,
+        points: summary.points, prize: prize,
+    });
+
+    addNews('🏁 第' + gameState.season + '赛季结束：' + team.name + ' 最终排名第 ' + rank + ' 名，获得奖金 ' + formatMoney(prize));
+    showToast('赛季结束！排名第 ' + rank + ' 名，奖金 ' + formatMoney(prize));
+
+    // 环球杯：5 大洲冠军 + 环亚杯冠军（亚洲） + 华超冠军（东道主）
+    prepareCWC();
+    const cwc = gameState.cwc;
+    if (cwc && cwc.userIn) {
+        awardUser(COMP_PRIZE.CWC_ENTRY, '环球杯参赛奖金');
+        addNews('🌍 好消息！' + team.name + ' 获得环球杯参赛资格（' +
+            (gameState.acl && gameState.acl.winner === team.id ? '环亚杯冠军' : '华超冠军·东道主') + '席位），8 强战即将开始。');
+        showToast('🌍 你获得了环球杯参赛资格！');
+        commit();
+        openCWCModal();
+        return;
+    }
+
+    autoRunCWC();
+    if (cwc && cwc.winner) {
+        const champ = teamById(cwc.winner);
+        if (champ) addNews('🌍 环球杯落幕，冠军是 ' + champ.name + '（你的球队未参赛）');
+    }
+    commit();
+    openSeasonModal();
+}
+
+// 描述玩家在华夏杯中的表现
+function describeCupRun(teamId) {
+    const cup = gameState.cup;
+    if (!cup) return '未参赛';
+    if (cup.winner === teamId) return '冠军 🏆';
+    let best = '未参赛';
+    for (let i = 0; i < cup.history.length; i++) {
+        const h = cup.history[i];
+        for (let j = 0; j < h.fixtures.length; j++) {
+            const m = h.fixtures[j];
+            if (m.homeId === teamId || m.awayId === teamId) {
+                if (m.winnerId !== teamId) return '止步' + h.name;
+                best = '晋级' + (CALENDAR.CUP_STAGE_NAMES[Math.min(i + 1, CALENDAR.CUP_STAGE_NAMES.length - 1)] || '');
+            }
+        }
+    }
+    return best;
+}
+
+// 描述玩家在环亚杯中的表现
+function describeACLRun(teamId) {
+    const acl = gameState.acl;
+    if (!acl) return '未参赛';
+    if (acl.qualified.indexOf(teamId) < 0) return '未获得资格';
+    if (acl.winner === teamId) return '冠军 🏆';
+    if (!acl.leagueDone) return '联赛阶段进行中（第 ' + aclRankOf(teamId) + ' 名）';
+    const rank = aclRankOf(teamId);
+    if (rank > 8) return '联赛阶段第 ' + rank + ' 名，未出线';
+    for (let i = 0; i < acl.ko.history.length; i++) {
+        const h = acl.ko.history[i];
+        for (let j = 0; j < h.fixtures.length; j++) {
+            const m = h.fixtures[j];
+            if (m.homeId === teamId || m.awayId === teamId) {
+                if (m.winnerId !== teamId) return '止步' + h.name;
+            }
+        }
+    }
+    return '联赛阶段第 ' + rank + ' 名';
+}
+
+function developPlayers() {
+    gameState.teams.forEach(function (team) {
+        const kept = [];
+        team.players.forEach(function (p) {
+            p.age++;
+            if (p.age <= 22) p.ability = clamp(p.ability + rand(1, 5), 30, p.potential);
+            else if (p.age <= 26) p.ability = clamp(p.ability + rand(0, 3), 30, p.potential);
+            else if (p.age <= 29) p.ability = clamp(p.ability + rand(-1, 1), 30, 96);
+            else if (p.age <= 32) p.ability = clamp(p.ability - rand(0, 2), 30, 96);
+            else p.ability = clamp(p.ability - rand(1, 3), 30, 96);
+            p.potential = clamp(Math.max(p.potential, p.ability), p.ability, 96);
+            p.goals = 0; p.assists = 0; p.apps = 0; p.ratingSum = 0;
+            p.injury = 0;
+            p.fitness = rand(82, 98);
+            p.morale = rand(62, 88);
+            refreshPlayerValue(p);
+
+            if (p.age >= 36 && Math.random() < 0.7) {
+                if (team.id === gameState.userTeamId) addNews('👋 ' + p.name + ' 宣布退役，感谢他多年来的贡献');
+            } else {
+                kept.push(p);
+            }
+        });
+
+        // 保证人数下限
+        while (kept.length < ECON.MIN_SQUAD) {
+            kept.push(makePlayer(team.powerBase - 8, pick(['DF', 'MF', 'FW', 'GK']), false));
+        }
+        // 青训提拔
+        const youth = rand(2, 3);
+        for (let i = 0; i < youth; i++) {
+            const yp = makePlayer(team.powerBase - 14, pick(['DF', 'MF', 'MF', 'FW', 'GK']), false);
+            yp.age = rand(17, 19);
+            yp.ability = clamp(yp.ability - 6, 30, 72);
+            yp.potential = clamp(yp.ability + rand(12, 26), yp.ability, 96);
+            refreshPlayerValue(yp);
+            kept.push(yp);
+        }
+        // 控制外援上限
+        let foreigners = kept.filter(function (p) { return p.isForeign; });
+        if (foreigners.length > ECON.MAX_FOREIGN) {
+            const extra = shuffle(foreigners).slice(ECON.MAX_FOREIGN);
+            const dropIds = {};
+            extra.forEach(function (p) { dropIds[p.id] = true; });
+            team.players = kept.filter(function (p) { return !dropIds[p.id]; });
+        } else {
+            team.players = kept;
+        }
+    });
+}
+
+function startNewSeason() {
+    if (!gameState.seasonComplete) { showToast('当前赛季尚未结束', true); return; }
+    if (gameState.cwc && !gameState.cwc.done && gameState.cwc.current && gameState.cwc.current.length) {
+        showToast('请先打完环球杯再开启新赛季', true);
+        openCWCModal();
+        return;
+    }
+    closeModal('seasonModal');
+    closeModal('cwcModal');
+
+    gameState.season++;
+    const team = getUserTeam();
+
+    // 先依据「上赛季最终成绩」确定环亚杯名额，再重置积分榜
+    const lastCupWinner = gameState.cup ? gameState.cup.winner : null;
+    const lastACLWinner = gameState.acl ? gameState.acl.winner : null;
+    const lastRank = gameState.seasonHistory.length ? gameState.seasonHistory[gameState.seasonHistory.length - 1].rank : 8;
+    const quals = aclQualifiers();
+
+    developPlayers();
+    rebuildExternalSquads();
+
+    // 重置积分榜与赛程
+    gameState.round = 1;
+    gameState.roundResults = null;
+    gameState.seasonComplete = false;
+    gameState.userForm = [];
+    gameState.lastSeasonSummary = null;
+    gameState.standings = gameState.teams.map(function (t) {
+        return {
+            teamId: t.id, teamName: t.name, teamEmoji: t.emoji,
+            played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, form: [],
+        };
+    });
+    gameState.schedule = buildSchedule(gameState.teams.map(function (t) { return t.id; }));
+    gameState.totalRounds = gameState.schedule.length;
+
+    // 新赛季收支重新统计 + 季票收入
+    if (team) {
+        const fin = gameState.finances[team.id];
+        fin.income = 0;
+        fin.expense = 0;
+        const rank = gameState.seasonHistory.length ? gameState.seasonHistory[gameState.seasonHistory.length - 1].rank : 8;
+        const seasonTicket = seasonTicketIncome(team, rank);
+        addFinance(fin, 'income', seasonTicket, '新赛季季票销售收入');
+        addNews('🎟️ 季票销售完成，收入 ' + formatMoney(seasonTicket));
+    }
+
+    // 重置三大赛事：华夏杯重新抽签，环亚杯按上赛季成绩分配名额
+    initCup();
+    initACL(quals);
+    gameState.cwc = null;
+
+    if (team && quals.indexOf(team.id) >= 0) {
+        addNews('🌏 ' + team.name + ' 获得本赛季环亚冠军联赛资格（上赛季' +
+            (lastCupWinner === team.id ? '华夏杯冠军' : '华超第 ' + lastRank + ' 名') + '）。');
+    } else if (team) {
+        addNews('🌏 本赛季环亚杯资格：' + quals.map(function (id) { return teamById(id).name; }).join('、') + '（你的球队未获资格）');
+    }
+    if (lastCupWinner) addNews('🏆 上赛季华夏杯冠军：' + teamById(lastCupWinner).name);
+    if (lastACLWinner) addNews('🌏 上赛季环亚杯冠军：' + teamById(lastACLWinner).name);
+
+    refreshTransferMarket(true);
+    addNews('🚀 第' + gameState.season + '赛季开幕！' + (team ? '目标：带领' + team.name + '取得更好成绩。' : ''));
+    commit();
+    showToast('第' + gameState.season + '赛季开始！');
+}
+
+/* ==================== 十一、转会市场 ==================== */
+
+function refreshTransferMarket(manual) {
+    const market = [];
+    const count = rand(14, 20);
+    for (let i = 0; i < count; i++) {
+        const powerLevel = rand(48, 84);
+        const isForeign = Math.random() < 0.35;
+        const player = makePlayer(powerLevel, pick(['GK', 'DF', 'DF', 'MF', 'MF', 'FW', 'FW']), isForeign);
+        player.askingPrice = round5(player.value * randFloat(0.85, 1.35));
+        market.push(player);
+    }
+    market.sort(function (a, b) { return b.ability - a.ability; });
+    gameState.transferMarket = market;
+    if (manual) showToast('转会市场已刷新', false, true);
+    return market;
+}
+
+function buyPlayer(playerId) {
+    const team = getUserTeam();
+    if (!team) { showToast('请先选择球队', true); return; }
+    let idx = -1;
+    for (let i = 0; i < gameState.transferMarket.length; i++) {
+        if (gameState.transferMarket[i].id === playerId) { idx = i; break; }
+    }
+    if (idx < 0) { showToast('该球员已不在转会市场', true); return; }
+
+    const player = gameState.transferMarket[idx];
+    const price = player.askingPrice || player.value;
+    const fin = gameState.finances[team.id];
+
+    if (fin.balance < price) { showToast('余额不足！需要 ' + formatMoney(price), true); return; }
+    if (team.players.length >= ECON.MAX_SQUAD) { showToast('球队人数已满（最多 ' + ECON.MAX_SQUAD + ' 人）', true); return; }
+    const foreignCount = team.players.filter(function (p) { return p.isForeign; }).length;
+    if (player.isForeign && foreignCount >= ECON.MAX_FOREIGN) {
+        showToast('外援名额已满（最多 ' + ECON.MAX_FOREIGN + ' 名）', true);
+        return;
+    }
+
+    addFinance(fin, 'expense', price, '购入球员：' + player.name);
+    const newcomer = Object.assign({}, player);
+    newcomer.id = uid('p');
+    newcomer.goals = 0;
+    newcomer.assists = 0;
+    newcomer.apps = 0;
+    newcomer.ratingSum = 0;
+    newcomer.morale = rand(68, 85);
+    newcomer.fitness = rand(85, 97);
+    newcomer.injury = 0;
+    delete newcomer.askingPrice;
+    team.players.push(newcomer);
+    gameState.transferMarket.splice(idx, 1);
+
+    addNews('💸 签下球员：' + newcomer.name + '（' + POS_LABEL[newcomer.position] + '，能力 ' + newcomer.ability + '），转会费 ' + formatMoney(price));
+    showToast('成功签下 ' + newcomer.name + '！');
+    commit();
+}
+
+function sellPlayer(playerId) {
+    const team = getUserTeam();
+    if (!team) return;
+    if (team.players.length <= ECON.MIN_SQUAD) {
+        showToast('球队人数不足（至少保留 ' + ECON.MIN_SQUAD + ' 人）', true);
+        return;
+    }
+    let idx = -1;
+    for (let i = 0; i < team.players.length; i++) {
+        if (team.players[i].id === playerId) { idx = i; break; }
+    }
+    if (idx < 0) return;
+    const player = team.players[idx];
+
+    // 门将保护：不足 2 名门将不允许再卖
+    if (player.position === 'GK' && team.players.filter(function (p) { return p.position === 'GK'; }).length <= 2) {
+        showToast('门将人数不足，无法出售', true);
+        return;
+    }
+
+    const sellPrice = round5(player.value * randFloat(0.62, 1.15));
+    const fin = gameState.finances[team.id];
+    addFinance(fin, 'income', sellPrice, '出售球员：' + player.name);
+    team.players.splice(idx, 1);
+
+    addNews('📤 出售球员：' + player.name + '，收入 ' + formatMoney(sellPrice));
+    showToast('已出售 ' + player.name + '，收入 ' + formatMoney(sellPrice));
+    closeModal('playerModal');
+    commit();
+}
+
+/* ==================== 十二、数据榜 ==================== */
+
+function allPlayersWithTeam() {
+    const rows = [];
+    gameState.teams.forEach(function (t) {
+        t.players.forEach(function (p) { rows.push({ p: p, team: t }); });
+    });
+    return rows;
+}
+
+function topScorers(limit, onlyTeamId) {
+    return allPlayersWithTeam()
+        .filter(function (r) { return (r.p.goals || 0) > 0 && (!onlyTeamId || r.team.id === onlyTeamId); })
+        .sort(function (a, b) { return (b.p.goals - a.p.goals) || (b.p.assists - a.p.assists); })
+        .slice(0, limit || 15);
+}
+
+function topAssists(limit) {
+    return allPlayersWithTeam()
+        .filter(function (r) { return (r.p.assists || 0) > 0; })
+        .sort(function (a, b) { return (b.p.assists - a.p.assists) || (b.p.goals - a.p.goals); })
+        .slice(0, limit || 15);
+}
+
+function topRatings(limit) {
+    return allPlayersWithTeam()
+        .filter(function (r) { return (r.p.apps || 0) >= 3; })
+        .map(function (r) { return { p: r.p, team: r.team, avg: r.p.ratingSum / r.p.apps }; })
+        .sort(function (a, b) { return b.avg - a.avg; })
+        .slice(0, limit || 15);
+}
+
+/* ==================== 十三、存档 ==================== */
+
+function saveData() {
+    const copy = Object.assign({}, gameState);
+    delete copy.userTeam;          // 运行时引用，不落盘（避免整队重复存储）
+    return copy;
+}
+
+function saveGame(manual) {
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(saveData()));
+        if (manual) showToast('已保存存档 💾');
+    } catch (e) {
+        if (manual) showToast('保存失败：' + (e && e.message ? e.message : '未知错误'), true);
+    }
+}
+
+function hasSave() {
+    try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
+}
+
+function loadGame(manual) {
+    let raw = null;
+    try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
+    if (!raw) { if (manual) showToast('没有找到存档', true); return false; }
+
+    let data = null;
+    try { data = JSON.parse(raw); } catch (e) { data = null; }
+    if (!data || !data.teams || !data.teams.length) {
+        if (manual) showToast('存档已损坏，无法读取', true);
+        return false;
+    }
+    if (data.version !== SAVE_VERSION) {
+        if (manual) showToast('存档版本不兼容，请重新开始', true);
+        return false;
+    }
+
+    gameState = Object.assign(createEmptyState(), data);
+    gameState.userTeam = null;
+    syncUserTeam();
+    if (!gameState.standings || !gameState.standings.length || !gameState.schedule || !gameState.schedule.length) {
+        gameState.standings = buildStandings();
+        gameState.schedule = buildSchedule(gameState.teams.map(function (t) { return t.id; }));
+        gameState.totalRounds = gameState.schedule.length;
+    }
+    if (manual) showToast('读档完成 📂');
+    return true;
+}
+
+function restartGame() {
+    if (!window.confirm('确定要重新开始吗？当前进度（含存档）将被清除。')) return;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* 忽略隐私模式下的异常 */ }
+    newGame();
+    render();
+    openTeamSelect();
+    showToast('已重新开始，请选择执教球队');
+}
+/* ==================== 十四、杯赛 / 环亚杯 / 环球杯 ==================== */
+
+// 外部球队（次级联赛、亚洲、世界）——拥有独立阵容，但不参与华超积分榜与球员数据榜
+function makeExternalTeam(tmpl, kind) {
+    return {
+        id: tmpl.id,
+        name: tmpl.name,
+        emoji: tmpl.emoji,
+        kind: kind,
+        external: true,
+        country: tmpl.country || tmpl.city || '',
+        desc: tmpl.desc || '',
+        city: tmpl.country || '',
+        stadium: (tmpl.country || '') + '主场',
+        powerBase: tmpl.power,
+        budgetBase: 0,
+        capacity: 30000,
+        players: buildSquad(tmpl.power),
+    };
+}
+
+function buildExternalTeams() {
+    let list = [];
+    DIV2_POOL.forEach(function (t) { list.push(makeExternalTeam(t, 'div2')); });
+    ASIA_POOL.forEach(function (t) { list.push(makeExternalTeam(t, 'asia')); });
+    WORLD_POOL.forEach(function (t) { list.push(makeExternalTeam(t, 'world')); });
+    gameState.externalTeams = list;
+}
+
+// 每赛季刷新外部球队阵容（避免多年后仍是同一批人）
+function rebuildExternalSquads() {
+    (gameState.externalTeams || []).forEach(function (t) {
+        t.players = buildSquad(t.powerBase);
+    });
+}
+
+// 点球大战：胜率由攻守强度决定
+function shootout(home, away) {
+    const hr = teamRatings(home);
+    const ar = teamRatings(away);
+    const hProb = clamp(0.70 + (hr.attack - ar.defense) / 260, 0.55, 0.88);
+    const aProb = clamp(0.70 + (ar.attack - hr.defense) / 260, 0.55, 0.88);
+    let h = 0, a = 0;
+    for (let i = 0; i < 5; i++) {
+        if (Math.random() < hProb) h++;
+        if (Math.random() < aProb) a++;
+    }
+    let guard = 0;
+    while (h === a && guard++ < 12) {
+        const hs = Math.random() < hProb;
+        const as = Math.random() < aProb;
+        if (hs) h++;
+        if (as) a++;
+    }
+    if (h === a) h++;
+    return { h: h, a: a };
+}
+
+// 淘汰赛单场：平局直接点球决胜
+function playKnockoutTie(homeId, awayId, neutral) {
+    const home = teamById(homeId);
+    const away = teamById(awayId);
+    if (!home || !away) return null;
+    const m = playMatch(home, away);
+    m.neutral = !!neutral;
+    m.played = true;
+    if (m.hg > m.ag) m.winnerId = home.id;
+    else if (m.ag > m.hg) m.winnerId = away.id;
+    else {
+        m.pens = shootout(home, away);
+        m.winnerId = m.pens.h > m.pens.a ? home.id : away.id;
+    }
+    applyMatchEffects(m);
+    return m;
+}
+
+function pairUpRandom(ids) {
+    const a = shuffle(ids);
+    const pairs = [];
+    for (let i = 0; i + 1 < a.length; i += 2) pairs.push({ home: a[i], away: a[i + 1], played: false });
+    return pairs;
+}
+
+// 按种子（越靠前越强）配对：1-8、2-7、3-6、4-5，强队主场
+function pairUpSeeded(ids, rankOf) {
+    const a = ids.slice().sort(function (x, y) { return rankOf(x) - rankOf(y); });
+    const pairs = [];
+    for (let i = 0; i < a.length / 2; i++) {
+        pairs.push({ home: a[i], away: a[a.length - 1 - i], played: false });
+    }
+    return pairs;
+}
+
+/* ---------- 华夏杯 ---------- */
+
+function initCup() {
+    // 种子：实力最强的 8 支华超球队，直接进入 1/8 决赛
+    const seeds = gameState.teams.slice()
+        .sort(function (a, b) { return b.powerBase - a.powerBase; })
+        .slice(0, 8).map(function (t) { return t.id; });
+    const others = gameState.teams.map(function (t) { return t.id; })
+        .filter(function (id) { return seeds.indexOf(id) < 0; })
+        .concat(DIV2_POOL.map(function (t) { return t.id; }));
+
+    gameState.cup = {
+        seeds: seeds,
+        stage: 0,
+        done: false,
+        winner: null,
+        current: pairUpRandom(others),
+        history: [],
+    };
+}
+
+function simulateCupRound() {
+    const cup = gameState.cup;
+    if (!cup || cup.done || !cup.current.length) return [];
+    const stageName = CALENDAR.CUP_STAGE_NAMES[cup.stage];
+    const results = [];
+    const winners = [];
+
+    cup.current.forEach(function (f) {
+        const m = playKnockoutTie(f.home, f.away, cup.stage === CALENDAR.CUP_STAGE_NAMES.length - 1);
+        if (!m) return;
+        m.stageName = stageName;
+        results.push(m);
+        winners.push(m.winnerId);
+    });
+    cup.history.push({ name: stageName, fixtures: results });
+
+    // 用户战况播报
+    results.forEach(function (m) {
+        if (!m.isUser) return;
+        const team = getUserTeam();
+        const isHome = m.homeId === gameState.userTeamId;
+        const gf = isHome ? m.hg : m.ag;
+        const ga = isHome ? m.ag : m.hg;
+        const opp = isHome ? m.awayName : m.homeName;
+        const won = m.winnerId === gameState.userTeamId;
+        const pensTxt = m.pens ? '（点球 ' + (isHome ? m.pens.h + '-' + m.pens.a : m.pens.a + '-' + m.pens.h) + '）' : '';
+        addNews('🏆 华夏杯' + stageName + '：' + team.name + ' ' + gf + '-' + ga + ' ' + opp + pensTxt + (won ? '　晋级！' : '　被淘汰'));
+        if (won && cup.stage < CALENDAR.CUP_STAGE_NAMES.length - 1) {
+            awardUser(COMP_PRIZE.CUP_ROUND_WIN, '华夏杯' + stageName + '晋级奖金');
+            showToast('华夏杯' + stageName + '晋级！+' + formatMoney(COMP_PRIZE.CUP_ROUND_WIN));
+        }
+    });
+
+    cup.stage++;
+    if (cup.stage >= CALENDAR.CUP_STAGE_NAMES.length) {
+        cup.done = true;
+        cup.winner = winners[0] || null;
+        cup.current = [];
+        const champ = teamById(cup.winner);
+        if (champ) {
+            addNews('🥇 华夏杯冠军：' + champ.name);
+            if (cup.winner === gameState.userTeamId) {
+                awardUser(COMP_PRIZE.CUP_CHAMPION, '华夏杯冠军奖金');
+                showToast('🏆 你赢得了华夏杯冠军！+' + formatMoney(COMP_PRIZE.CUP_CHAMPION));
+            }
+        }
+    } else {
+        const pool = cup.stage === 1 ? cup.seeds.concat(winners) : winners;
+        cup.current = pairUpRandom(pool);
+    }
+    return results;
+}
+
+/* ---------- 环亚冠军联赛 ---------- */
+
+function aclUpdateRow(teamId, gf, ga) {
+    const acl = gameState.acl;
+    for (let i = 0; i < acl.table.length; i++) {
+        const r = acl.table[i];
+        if (r.teamId !== teamId) continue;
+        r.played++;
+        r.goalsFor += gf;
+        r.goalsAgainst += ga;
+        if (gf > ga) { r.wins++; r.points += 3; }
+        else if (gf === ga) { r.draws++; r.points += 1; }
+        else { r.losses++; }
+        return;
+    }
+}
+
+function aclSorted() {
+    const acl = gameState.acl;
+    if (!acl) return [];
+    return acl.table.slice().sort(function (a, b) {
+        if (b.points !== a.points) return b.points - a.points;
+        const gdA = a.goalsFor - a.goalsAgainst;
+        const gdB = b.goalsFor - b.goalsAgainst;
+        if (gdB !== gdA) return gdB - gdA;
+        return b.goalsFor - a.goalsFor;
+    });
+}
+
+function aclRankOf(teamId) {
+    const sorted = aclSorted();
+    for (let i = 0; i < sorted.length; i++) if (sorted[i].teamId === teamId) return i + 1;
+    return sorted.length + 1;
+}
+
+function initACL(qualifiedIds) {
+    const teams = qualifiedIds.slice(0, 4).concat(ASIA_POOL.map(function (t) { return t.id; }));
+    gameState.acl = {
+        teams: teams,
+        qualified: qualifiedIds.slice(0, 4),
+        table: teams.map(function (id) {
+            return { teamId: id, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
+        }),
+        schedule: buildSchedule(teams).slice(0, CALENDAR.ACL_LEAGUE_ROUNDS.length),
+        round: 0,
+        leagueDone: false,
+        history: [],
+        ko: { stage: 0, current: [], history: [], done: false },
+        winner: null,
+    };
+}
+
+function simulateACLLeagueRound() {
+    const acl = gameState.acl;
+    if (!acl || acl.leagueDone) return [];
+    const fixtures = acl.schedule[acl.round] || [];
+    const results = [];
+
+    fixtures.forEach(function (f) {
+        const home = teamById(f.home);
+        const away = teamById(f.away);
+        if (!home || !away) return;
+        const m = playMatch(home, away);
+        m.aclRound = acl.round + 1;
+        applyMatchEffects(m);
+        aclUpdateRow(f.home, m.hg, m.ag);
+        aclUpdateRow(f.away, m.ag, m.hg);
+        results.push(m);
+    });
+
+    acl.history.push({ round: acl.round + 1, fixtures: results });
+    acl.round++;
+
+    // 用户奖金 + 播报
+    results.forEach(function (m) {
+        if (!m.isUser) return;
+        const isHome = m.homeId === gameState.userTeamId;
+        const gf = isHome ? m.hg : m.ag;
+        const ga = isHome ? m.ag : m.hg;
+        const opp = isHome ? m.awayName : m.homeName;
+        if (gf > ga) awardUser(COMP_PRIZE.ACL_WIN, '环亚杯联赛阶段胜场奖金');
+        else if (gf === ga) awardUser(COMP_PRIZE.ACL_DRAW, '环亚杯联赛阶段平局奖金');
+        addNews('🌏 环亚杯第' + (acl.round) + '轮：' + gameState.userTeam.name + ' ' + gf + '-' + ga + ' ' + opp);
+    });
+
+    if (acl.round >= acl.schedule.length) {
+        acl.leagueDone = true;
+        const top8 = aclSorted().slice(0, 8).map(function (r) { return r.teamId; });
+        acl.ko.current = pairUpSeeded(top8, aclRankOf);
+        const userRank = aclRankOf(gameState.userTeamId);
+        const userIn = top8.indexOf(gameState.userTeamId) >= 0;
+        addNews('🌏 环亚杯联赛阶段结束，' + (userIn ? '你的球队以第 ' + userRank + ' 名晋级淘汰赛！' : '你的球队未能晋级淘汰赛'));
+        if (userIn) {
+            awardUser(COMP_PRIZE.ACL_KO[0], '环亚杯晋级 1/8 决赛奖金');
+            showToast('环亚杯联赛阶段第 ' + userRank + ' 名，晋级淘汰赛！');
+        }
+    }
+    return results;
+}
+
+function simulateACLKO() {
+    const acl = gameState.acl;
+    if (!acl || !acl.leagueDone || acl.ko.done || !acl.ko.current.length) return [];
+    const stageName = CALENDAR.ACL_KO_NAMES[acl.ko.stage];
+    const results = [];
+    const winners = [];
+
+    acl.ko.current.forEach(function (f) {
+        const m = playKnockoutTie(f.home, f.away, acl.ko.stage === CALENDAR.ACL_KO_NAMES.length - 1);
+        if (!m) return;
+        m.stageName = stageName;
+        results.push(m);
+        winners.push(m.winnerId);
+    });
+    acl.ko.history.push({ name: stageName, fixtures: results });
+
+    results.forEach(function (m) {
+        if (!m.isUser) return;
+        const isHome = m.homeId === gameState.userTeamId;
+        const gf = isHome ? m.hg : m.ag;
+        const ga = isHome ? m.ag : m.hg;
+        const opp = isHome ? m.awayName : m.homeName;
+        const won = m.winnerId === gameState.userTeamId;
+        const pensTxt = m.pens ? '（点球 ' + (isHome ? m.pens.h + '-' + m.pens.a : m.pens.a + '-' + m.pens.h) + '）' : '';
+        addNews('🌏 环亚杯' + stageName + '：' + gameState.userTeam.name + ' ' + gf + '-' + ga + ' ' + opp + pensTxt + (won ? '　晋级！' : '　止步'));
+        if (won && acl.ko.stage < CALENDAR.ACL_KO_NAMES.length - 1) {
+            const bonus = COMP_PRIZE.ACL_KO[acl.ko.stage + 1] || 0;
+            awardUser(bonus, '环亚杯晋级' + CALENDAR.ACL_KO_NAMES[acl.ko.stage + 1] + '奖金');
+            showToast('环亚杯' + stageName + '晋级！+' + formatMoney(bonus));
+        }
+    });
+
+    acl.ko.stage++;
+    if (acl.ko.stage >= CALENDAR.ACL_KO_NAMES.length) {
+        acl.ko.done = true;
+        acl.ko.current = [];
+        acl.winner = winners[0] || null;
+        const champ = teamById(acl.winner);
+        if (champ) addNews('🥇 环亚冠军联赛冠军：' + champ.name);
+        if (acl.winner === gameState.userTeamId) {
+            awardUser(COMP_PRIZE.ACL_KO[3], '环亚杯冠军奖金');
+            showToast('🏆 你赢得了环亚冠军联赛冠军！+' + formatMoney(COMP_PRIZE.ACL_KO[3]));
+        }
+    } else {
+        acl.ko.current = pairUpSeeded(winners, aclRankOf);
+    }
+    return results;
+}
+
+/* ---------- 环球杯 ---------- */
+
+function cwcUserIn() {
+    const c = gameState.cwc;
+    if (!c || !c.teams) return false;
+    return c.teams.indexOf(gameState.userTeamId) >= 0;
+}
+
+// 赛季结束后组建环球杯：5 大洲冠军 + 环亚杯冠军（亚洲）+ 华超冠军（东道主）
+function prepareCWC() {
+    const sorted = sortStandings();
+    const leagueChamp = sorted[0] ? sorted[0].teamId : null;
+    const aclChamp = gameState.acl ? gameState.acl.winner : null;
+
+    let asian = aclChamp;
+    let host = leagueChamp;
+    if (asian && host && asian === host) {
+        host = sorted[1] ? sorted[1].teamId : leagueChamp;   // 同一队包揽 → 东道主席位顺延
+    }
+    const teams = WORLD_POOL.map(function (t) { return t.id; });
+    if (asian && teams.indexOf(asian) < 0) teams.push(asian);
+    if (host && teams.indexOf(host) < 0) teams.push(host);
+
+    // 抽签：两支本国球队不在 1/4 决赛相遇
+    const leagueIds = gameState.teams.map(function (t) { return t.id; });
+    let round = null;
+    for (let attempt = 0; attempt < 30; attempt++) {
+        round = pairUpRandom(teams);
+        let clash = false;
+        round.forEach(function (p) {
+            if (leagueIds.indexOf(p.home) >= 0 && leagueIds.indexOf(p.away) >= 0) clash = true;
+        });
+        if (!clash) break;
+    }
+    if (!round) round = pairUpRandom(teams);
+
+    gameState.cwc = {
+        teams: teams,
+        stage: 0,
+        current: round,
+        history: [],
+        winner: null,
+        done: false,
+        userIn: teams.indexOf(gameState.userTeamId) >= 0,
+        autoRun: false,
+    };
+    return gameState.cwc;
+}
+
+function simulateCWCRound() {
+    const c = gameState.cwc;
+    if (!c || !c.current.length || c.done) return [];
+    const stageName = CALENDAR.CWC_NAMES[c.stage];
+    const results = [];
+    const winners = [];
+
+    c.current.forEach(function (f) {
+        const m = playKnockoutTie(f.home, f.away, true);
+        if (!m) return;
+        m.stageName = stageName;
+        results.push(m);
+        winners.push(m.winnerId);
+    });
+    c.history.push({ name: stageName, fixtures: results });
+
+    results.forEach(function (m) {
+        if (!m.isUser) return;
+        const isHome = m.homeId === gameState.userTeamId;
+        const gf = isHome ? m.hg : m.ag;
+        const ga = isHome ? m.ag : m.hg;
+        const opp = isHome ? m.awayName : m.homeName;
+        const won = m.winnerId === gameState.userTeamId;
+        addNews('🌍 环球杯' + stageName + '：' + gameState.userTeam.name + ' ' + gf + '-' + ga + ' ' + opp + (won ? '　晋级！' : '　止步'));
+        if (won && c.stage < CALENDAR.CWC_NAMES.length - 1) {
+            const bonus = COMP_PRIZE.CWC_ROUND_WIN[c.stage] || 0;
+            awardUser(bonus, '环球杯' + stageName + '晋级奖金');
+            showToast('环球杯' + stageName + '晋级！+' + formatMoney(bonus));
+        }
+    });
+
+    c.stage++;
+    if (c.stage >= CALENDAR.CWC_NAMES.length) {
+        c.done = true;
+        c.current = [];
+        c.winner = winners[0] || null;
+        const champ = teamById(c.winner);
+        if (champ) addNews('🌍 环球杯冠军：' + champ.name);
+        if (c.winner === gameState.userTeamId) {
+            awardUser(COMP_PRIZE.CWC_CHAMPION, '环球杯冠军奖金');
+            showToast('🏆 你赢得了环球杯冠军！+' + formatMoney(COMP_PRIZE.CWC_CHAMPION));
+        }
+    } else {
+        c.current = pairUpRandom(winners);
+    }
+    return results;
+}
+
+// 玩家未参赛时，后台直接跑完环球杯
+function autoRunCWC() {
+    let guard = 0;
+    while (gameState.cwc && !gameState.cwc.done && gameState.cwc.current.length && guard++ < 10) {
+        simulateCWCRound();
+    }
+    gameState.cwc.autoRun = true;
+}
+
+function awardUser(amount, desc) {
+    const team = getUserTeam();
+    if (!team || !amount) return;
+    addFinance(gameState.finances[team.id], 'income', amount, desc);
+}
+
+// 环亚杯资格：上赛季华超前 3 + 华夏杯冠军（重复则顺延）
+function aclQualifiers() {
+    const sorted = sortStandings();
+    const list = [];
+    for (let i = 0; i < sorted.length && list.length < 3; i++) list.push(sorted[i].teamId);
+    const cupWinner = gameState.cup ? gameState.cup.winner : null;
+    if (cupWinner && list.indexOf(cupWinner) < 0) list.push(cupWinner);
+    else {
+        for (let i = 0; i < sorted.length && list.length < 4; i++) {
+            if (list.indexOf(sorted[i].teamId) < 0) { list.push(sorted[i].teamId); break; }
+        }
+    }
+    for (let i = 0; i < sorted.length && list.length < 4; i++) {
+        if (list.indexOf(sorted[i].teamId) < 0) list.push(sorted[i].teamId);
+    }
+    return list.slice(0, 4);
+}
+
+// 首个赛季的环亚杯资格（按球队实力推定）+ 首轮杯赛抽签
+function initSeasonCompetitions() {
+    initCup();
+    let quals = aclQualifiers();
+    if (!gameState.standings.some(function (s) { return s.played > 0; })) {
+        quals = gameState.teams.slice()
+            .sort(function (a, b) { return b.powerBase - a.powerBase; })
+            .slice(0, 4).map(function (t) { return t.id; });
+    }
+    initACL(quals);
+    gameState.cwc = null;
+}
+
+/* ---------- 本轮赛事汇总 ---------- */
+
+function compMatchesUserPlayed(matches) {
+    if (!matches) return [];
+    return matches.filter(function (m) { return m && m.isUser; });
+}
+
+// 汇总本轮玩家的全部比赛（联赛 + 华夏杯 + 环亚杯）
+function userMatchesOfRound(rr) {
+    if (!rr) return [];
+    const out = [];
+    (rr.fixtures || []).forEach(function (m) { if (m.isUser) out.push({ comp: 'league', m: m }); });
+    (rr.cup || []).forEach(function (m) { if (m.isUser) out.push({ comp: 'cup', m: m }); });
+    (rr.acl || []).forEach(function (m) { if (m.isUser) out.push({ comp: 'acl', m: m }); });
+    return out;
+}
+
+const COMP_LABEL = { league: '华超', cup: '华夏杯', acl: '环亚杯', cwc: '环球杯' };
+
+/* ==================== 十五、新游戏与选队 ==================== */
+
+function buildStandings() {
+    return gameState.teams.map(function (t) {
+        return {
+            teamId: t.id, teamName: t.name, teamEmoji: t.emoji,
+            played: 0, wins: 0, draws: 0, losses: 0,
+            goalsFor: 0, goalsAgainst: 0, points: 0, form: [],
+        };
+    });
+}
+
+function newGame() {
+    gameState = createEmptyState();
+    gameState.teams = TEAM_POOL.map(function (tmpl) {
+        return {
+            id: tmpl.id, name: tmpl.name, emoji: tmpl.emoji, color: tmpl.color,
+            city: tmpl.city, stadium: tmpl.stadium, capacity: tmpl.capacity,
+            powerBase: tmpl.powerBase, budgetBase: tmpl.budgetBase,
+            players: buildSquad(tmpl.powerBase),
+        };
+    });
+    gameState.standings = buildStandings();
+    gameState.schedule = buildSchedule(gameState.teams.map(function (t) { return t.id; }));
+    gameState.totalRounds = gameState.schedule.length;
+    gameState.finances = {};
+    gameState.teams.forEach(function (t) {
+        gameState.finances[t.id] = {
+            balance: t.budgetBase, income: 0, expense: 0,
+            history: [{ desc: '俱乐部期初预算', amount: t.budgetBase, type: 'init', round: 0, season: 1 }],
+        };
+    });
+    refreshTransferMarket(false);
+    buildExternalTeams();
+    initSeasonCompetitions();
+}
+
+function selectTeam(teamId) {
+    const team = teamById(teamId);
+    if (!team) return;
+    gameState.userTeamId = teamId;
+    syncUserTeam();
+    gameState.tactics = 'balanced';
+    closeModal('teamSelectModal');
+    addNews('🎉 你已出任 ' + team.name + ' 主教练！本赛季目标：力争上游。');
+    const inACL = gameState.acl && gameState.acl.qualified.indexOf(teamId) >= 0;
+    if (inACL) {
+        addNews('🌏 ' + team.name + ' 获得本赛季环亚冠军联赛参赛资格，小组赛阶段共 8 场。');
+    }
+    commit();
+    switchPanel('dashboard');
+    showToast('执教 ' + team.name + '，加油！💪');
+}
+
+function setTactics(t) {
+    if (!TACTICS[t]) return;
+    gameState.tactics = t;
+    addNews('🎯 战术调整为：' + TACTICS[t].label);
+    commit();
+}
+
+/* ==================== 十五、渲染层 ==================== */
+
+function esc(s) { return escapeHtml(s); }
+
+function render() {
+    renderTop();
+    renderPanel(currentPanel);
+}
+
+function renderPanel(name) {
+    switch (name) {
+        case 'dashboard': renderDashboard(); break;
+        case 'squad': renderSquad(); break;
+        case 'match': renderMatch(); break;
+        case 'standings': renderStandings(); break;
+        case 'comps': renderComps(); break;
+        case 'stats': renderStats(); break;
+        case 'transfer': renderTransfer(); break;
+        case 'finance': renderFinance(); break;
+        default: break;
+    }
+}
+
+// 提交状态变更：存档 + 重绘当前面板
+function commit() {
+    saveGame(false);
+    render();
+}
+
+function switchPanel(name) {
+    currentPanel = name;
+    const panels = document.querySelectorAll('.panel');
+    for (let i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+    const tabs = document.querySelectorAll('.nav-tab');
+    for (let i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+
+    const panel = document.getElementById('panel-' + name);
+    if (panel) panel.classList.add('active');
+    const tab = document.querySelector('.nav-tab[data-id="' + name + '"]');
+    if (tab) tab.classList.add('active');
+    renderPanel(name);
+}
+
+function formBadges(form) {
+    if (!form || !form.length) return '<span class="card-subtitle">暂无</span>';
+    return form.map(function (f) {
+        return '<span class="form-badge form-' + f.toLowerCase() + '">' + f + '</span>';
+    }).join('');
+}
+
+function renderTop() {
+    const team = gameState.userTeam;
+    document.getElementById('qsTeam').textContent = team ? team.name : '--';
+    document.getElementById('qsRank').textContent = team ? '#' + getRank(team.id) : '--';
+    document.getElementById('qsBudget').textContent = team ? formatMoney(gameState.finances[team.id].balance) : '--';
+    document.getElementById('qsRound').textContent = gameState.seasonComplete
+        ? '赛季结束'
+        : '第' + gameState.round + '/' + gameState.totalRounds + '轮';
+    document.getElementById('seasonBadge').textContent = '🏆 ' + (START_YEAR + gameState.season - 1) + ' 赛季' +
+        (gameState.seasonComplete ? ' · 已结束' : '');
+}
+
+function renderDashboard() {
+    const team = gameState.userTeam;
+    const $ = function (id) { return document.getElementById(id); };
+
+    if (!team) {
+        $('dashTeamName').textContent = '未选择';
+        $('dashTeamFull').textContent = '请选择执教球队';
+        $('dashTeamEmoji').textContent = '❓';
+        $('dashStadium').textContent = '--';
+        $('dashPower').textContent = '--';
+        $('dashAtk').textContent = '--';
+        $('dashDef').textContent = '--';
+        $('dashTotalPlayers').textContent = '--';
+        $('dashForeign').textContent = '--';
+        $('dashAvgAge').textContent = '--';
+        $('dashValue').textContent = '--';
+        $('dashWage').textContent = '--';
+        $('dashRank').textContent = '--';
+        $('dashWins').textContent = '0';
+        $('dashDraws').textContent = '0';
+        $('dashLosses').textContent = '0';
+        $('dashPoints').textContent = '0';
+        $('dashGoals').textContent = '0 / 0';
+        $('dashGD').textContent = '0';
+        $('dashForm').innerHTML = '<span class="card-subtitle">暂无比赛</span>';
+        $('dashHistory').textContent = '暂无';
+        $('dashNews').innerHTML = '<div class="empty">请先选择执教球队</div>';
+        return;
+    }
+
+    const r = teamRatings(team);
+    const st = standingOf(team.id) || { wins: 0, draws: 0, losses: 0, points: 0, goalsFor: 0, goalsAgainst: 0 };
+    const avgAge = team.players.length
+        ? Math.round(team.players.reduce(function (s, p) { return s + p.age; }, 0) / team.players.length)
+        : 0;
+    const totalValue = team.players.reduce(function (s, p) { return s + p.value; }, 0);
+
+    $('dashTeamName').textContent = team.name;
+    $('dashTeamFull').textContent = team.emoji + ' ' + team.name;
+    $('dashTeamEmoji').textContent = team.emoji;
+    $('dashStadium').textContent = team.stadium + '（' + team.capacity.toLocaleString('zh-CN') + ' 人）';
+    $('dashPower').textContent = r.overall;
+    $('dashAtk').textContent = r.attack;
+    $('dashDef').textContent = r.defense;
+    $('dashTotalPlayers').textContent = team.players.length + ' 人';
+    $('dashForeign').textContent = team.players.filter(function (p) { return p.isForeign; }).length + ' 人';
+    $('dashAvgAge').textContent = avgAge + ' 岁';
+    $('dashValue').textContent = formatMoney(totalValue);
+    $('dashWage').textContent = formatMoney(wageBillOf(team));
+    $('dashRank').textContent = '当前排名：第 ' + getRank(team.id) + ' 名';
+    $('dashWins').textContent = st.wins;
+    $('dashDraws').textContent = st.draws;
+    $('dashLosses').textContent = st.losses;
+    $('dashPoints').textContent = st.points;
+    $('dashGoals').textContent = st.goalsFor + ' / ' + st.goalsAgainst;
+    const gd = st.goalsFor - st.goalsAgainst;
+    $('dashGD').textContent = (gd >= 0 ? '+' : '') + gd;
+    $('dashForm').innerHTML = formBadges(gameState.userForm);
+
+    $('dashHistory').innerHTML = gameState.seasonHistory.length
+        ? gameState.seasonHistory.slice(-4).map(function (h) {
+            return '第' + h.season + '赛季 第' + h.rank + '名（' + h.points + '分）';
+        }).join('　|　')
+        : '暂无';
+
+    $('dashNews').innerHTML = gameState.newsLog.length
+        ? gameState.newsLog.slice(0, 18).map(function (n) {
+            return '<div style="padding:7px 0;border-bottom:1px solid rgba(42,45,61,0.45);font-size:0.85rem;">' +
+                esc(n.msg) + ' <span class="card-subtitle" style="font-size:0.68rem;margin-left:6px;">' + esc(n.time) + '</span></div>';
+        }).join('')
+        : '<div class="empty">暂无动态</div>';
+}
+
+function renderSquad() {
+    const $ = function (id) { return document.getElementById(id); };
+    const team = gameState.userTeam;
+    const grid = $('squadGrid');
+    const tacticsCard = $('tacticsCard');
+
+    if (!team) {
+        grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">请先选择执教球队</div>';
+        $('squadCount').textContent = '';
+        tacticsCard.style.display = 'none';
+        return;
+    }
+    tacticsCard.style.display = 'block';
+    $('currentTactics').textContent = TACTICS[gameState.tactics].label;
+
+    const filter = $('squadFilter').value;
+    const sortBy = $('squadSort').value;
+    let players = team.players.slice();
+    if (filter !== 'all') players = players.filter(function (p) { return p.position === filter; });
+
+    const sorters = {
+        ability: function (a, b) { return b.ability - a.ability; },
+        value: function (a, b) { return b.value - a.value; },
+        age: function (a, b) { return a.age - b.age; },
+        goals: function (a, b) { return (b.goals || 0) - (a.goals || 0) || (b.assists || 0) - (a.assists || 0); },
+        fitness: function (a, b) { return b.fitness - a.fitness; },
+    };
+    players.sort(sorters[sortBy] || sorters.ability);
+    if (sortBy !== 'age') {
+        // 同位置内展示，更符合阅览习惯
+        players.sort(function (a, b) { return POS_ORDER[a.position] - POS_ORDER[b.position]; });
+    }
+
+    $('squadCount').textContent = '共 ' + players.length + ' 人 · 每轮薪资 ' + formatMoney(wageBillOf(team));
+
+    grid.innerHTML = players.map(function (p) {
+        const fitColor = p.fitness >= 70 ? 'green' : p.fitness >= 45 ? 'orange' : 'red';
+        const injured = p.injury > 0;
+        return '<div class="player-card" data-action="open-player" data-id="' + p.id + '">' +
+            '<span class="pos-badge ' + POS_CLASS[p.position] + '">' + POS_LABEL[p.position] + '</span>' +
+            '<div class="player-name">' + esc(p.name) + (p.isForeign ? ' 🌍' : '') + '</div>' +
+            '<div class="player-rating">' + p.ability + '</div>' +
+            '<div class="player-detail stars">' + stars(p.ability) + '</div>' +
+            '<div class="player-detail">' + p.age + '岁 · ' + formatMoney(p.value) + '</div>' +
+            '<div class="player-detail">⚽' + (p.goals || 0) + ' 🅰️' + (p.assists || 0) + '　' + p.apps + '场</div>' +
+            (injured
+                ? '<div class="player-detail flag-injured">🤕 伤停 ' + p.injury + ' 轮</div>'
+                : '<div class="mini-bar"><div class="progress-fill ' + fitColor + '" style="width:' + p.fitness + '%"></div></div>' +
+                  '<div class="player-detail">体能 ' + p.fitness + '%</div>') +
+            '</div>';
+    }).join('') || '<div class="empty" style="grid-column:1/-1;">该位置暂无球员</div>';
+}
+
+function renderStandings() {
+    const $ = function (id) { return document.getElementById(id); };
+    $('standingsRound').textContent = gameState.seasonComplete
+        ? '赛季已结束'
+        : '第 ' + gameState.round + ' / ' + gameState.totalRounds + ' 轮';
+    const sorted = sortStandings();
+    const tbody = $('standingsBody');
+
+    if (!sorted.length || sorted.every(function (s) { return s.played === 0; })) {
+        tbody.innerHTML = '<tr><td colspan="11" class="empty">赛季尚未开始，请到「比赛日」模拟比赛</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = sorted.map(function (s, i) {
+        const gd = s.goalsFor - s.goalsAgainst;
+        const isUser = s.teamId === gameState.userTeamId;
+        const zone = i < 4 ? 'rank-acl' : (i >= sorted.length - 2 ? 'rank-rel' : '');
+        return '<tr class="' + (isUser ? 'row-user ' : '') + zone + '">' +
+            '<td><strong>' + (i + 1) + '</strong></td>' +
+            '<td>' + esc(s.teamEmoji || '') + ' <strong>' + esc(s.teamName) + '</strong>' + (isUser ? ' ⭐' : '') + '</td>' +
+            '<td>' + s.played + '</td><td>' + s.wins + '</td><td>' + s.draws + '</td><td>' + s.losses + '</td>' +
+            '<td>' + s.goalsFor + '</td><td>' + s.goalsAgainst + '</td>' +
+            '<td style="color:' + (gd > 0 ? 'var(--green)' : gd < 0 ? 'var(--primary)' : 'var(--text-secondary)') + '"><strong>' + (gd >= 0 ? '+' : '') + gd + '</strong></td>' +
+            '<td><strong style="color:var(--gold);font-size:1.05rem;">' + s.points + '</strong></td>' +
+            '<td>' + formBadges(s.form) + '</td>' +
+            '</tr>';
+    }).join('');
+}
+
+function statsTable(rows, valueKey, unit) {
+    if (!rows.length) return '<tr><td colspan="4" class="empty">暂无数据</td></tr>';
+    return rows.map(function (r, i) {
+        const v = valueKey === 'avg' ? r.avg.toFixed(2) : r.p[valueKey];
+        const isUser = gameState.userTeamId && r.team.id === gameState.userTeamId;
+        return '<tr class="' + (isUser ? 'row-user' : '') + ' clickable" data-action="open-player" data-id="' + r.p.id + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + esc(r.p.name) + (r.p.isForeign ? ' 🌍' : '') + '</td>' +
+            '<td>' + esc(r.team.name) + '</td>' +
+            '<td><strong style="color:var(--gold);">' + v + unit + '</strong></td>' +
+            '</tr>';
+    }).join('');
+}
+
+/* ---------- 杯赛中心 ---------- */
+
+let currentCompTab = 'cup';
+
+function playedRowHtml(m) {
+    const pens = m.pens
+        ? '<span class="badge badge-gold" style="margin-left:6px;">点球 ' + m.pens.h + '-' + m.pens.a + '</span>'
+        : '';
+    return '<div class="fixture-row' + (m.isUser ? ' is-user' : '') + '">' +
+        '<div class="fx-team">' + esc((m.homeEmoji || '') + ' ' + m.homeName) + '</div>' +
+        '<div class="fx-score">' + m.hg + ' - ' + m.ag + pens + '</div>' +
+        '<div class="fx-team away">' + esc(m.awayName + ' ' + (m.awayEmoji || '')) + '</div>' +
+        '</div>';
+}
+
+function pendingRowHtml(f) {
+    const home = teamById(f.home);
+    const away = teamById(f.away);
+    const isUser = f.home === gameState.userTeamId || f.away === gameState.userTeamId;
+    return '<div class="fixture-row' + (isUser ? ' is-user' : '') + '">' +
+        '<div class="fx-team">' + esc(home ? home.emoji + ' ' + home.name : '？') + '</div>' +
+        '<div class="fx-score" style="font-size:0.72rem;opacity:0.7;">VS</div>' +
+        '<div class="fx-team away">' + esc(away ? away.name + ' ' + away.emoji : '？') + '</div>' +
+        '</div>';
+}
+
+function roundBlockHtml(title, fixtures, pending) {
+    const rows = pending ? fixtures.map(pendingRowHtml).join('') : fixtures.map(playedRowHtml).join('');
+    return '<div style="margin-bottom:14px;">' +
+        '<div class="card-subtitle" style="margin-bottom:4px;font-weight:700;color:var(--text);">' + esc(title) + '</div>' +
+        (rows || '<div class="empty">暂无对阵</div>') + '</div>';
+}
+
+function cupHtml() {
+    const cup = gameState.cup;
+    if (!cup) return '<div class="card"><div class="empty">本赛季华夏杯尚未开始</div></div>';
+    const team = gameState.userTeam;
+    const stageTitle = cup.done ? '已结束' : CALENDAR.CUP_STAGE_NAMES[cup.stage];
+
+    let html = '<div class="grid-2">' +
+        '<div class="card"><div class="card-header"><span class="card-title">🏆 华夏杯</span>' +
+        '<span class="card-subtitle">' + esc(stageTitle) + '</span></div>' +
+        '<div class="kv"><span class="k">赛制</span><span class="v" style="font-size:0.85rem;">24 队单败淘汰（16 华超 + 8 次级联赛），单场决胜</span></div>' +
+        '<div class="kv mt-8"><span class="k">你的成绩</span><span class="v" style="color:var(--gold);">' +
+        esc(team ? describeCupRun(team.id) : '未参赛') + '</span></div>' +
+        '<div class="kv mt-8"><span class="k">本届冠军</span><span class="v">' +
+        (cup.winner ? esc(teamById(cup.winner).name) + ' 🏆' : '待定') + '</span></div>' +
+        '<div class="kv mt-8"><span class="k">冠军奖励</span><span class="v">' + formatMoney(COMP_PRIZE.CUP_CHAMPION) +
+        ' + 下赛季环亚杯资格</span></div>' +
+        '</div>' +
+        '<div class="card"><div class="card-header"><span class="card-title">📅 赛程节点</span></div>' +
+        CALENDAR.CUP_ROUNDS.map(function (r, i) {
+            const st = (cup.done || cup.stage > i) ? '已结束' : (cup.stage === i ? '进行中' : '未开始');
+            const color = st === '已结束' ? 'var(--green)' : st === '进行中' ? 'var(--gold)' : 'var(--text-secondary)';
+            return '<div class="fixture-row"><div class="fx-team">' + CALENDAR.CUP_STAGE_NAMES[i] + '</div>' +
+                '<div class="fx-score" style="font-size:0.72rem;">第 ' + r + ' 轮</div>' +
+                '<div class="fx-team away" style="color:' + color + ';">' + st + '</div></div>';
+        }).join('') +
+        '</div></div>';
+
+    if (!cup.done && cup.current.length) {
+        html += '<div class="card"><div class="card-header"><span class="card-title">' +
+            esc(CALENDAR.CUP_STAGE_NAMES[cup.stage]) + ' 对阵（第 ' + CALENDAR.CUP_ROUNDS[cup.stage] + ' 轮周中）</span></div>' +
+            cup.current.map(pendingRowHtml).join('') + '</div>';
+    }
+
+    html += '<div class="card"><div class="card-header"><span class="card-title">📜 历轮赛果</span></div>' +
+        (cup.history.length
+            ? cup.history.map(function (h) { return roundBlockHtml(h.name, h.fixtures, false); }).join('')
+            : '<div class="empty">尚无比赛</div>') +
+        '</div>';
+    return html;
+}
+
+function aclHtml() {
+    const acl = gameState.acl;
+    if (!acl) return '<div class="card"><div class="empty">本赛季环亚杯尚未开始</div></div>';
+    const team = gameState.userTeam;
+    const qualified = !!(team && acl.qualified.indexOf(team.id) >= 0);
+    const sorted = aclSorted();
+
+    const tableRows = sorted.map(function (r, i) {
+        const t = teamById(r.teamId);
+        const isUser = r.teamId === gameState.userTeamId;
+        const gd = r.goalsFor - r.goalsAgainst;
+        return '<tr class="' + (isUser ? 'row-user ' : '') + (i < 8 ? 'rank-acl' : '') + '">' +
+            '<td><strong>' + (i + 1) + '</strong></td>' +
+            '<td>' + esc((t ? t.emoji + ' ' + t.name : r.teamId)) + (isUser ? ' ⭐' : '') + '</td>' +
+            '<td>' + r.played + '</td><td>' + r.wins + '</td><td>' + r.draws + '</td><td>' + r.losses + '</td>' +
+            '<td>' + r.goalsFor + ':' + r.goalsAgainst + '</td>' +
+            '<td>' + (gd >= 0 ? '+' : '') + gd + '</td>' +
+            '<td><strong style="color:var(--gold);">' + r.points + '</strong></td></tr>';
+    }).join('');
+
+    let html = '<div class="grid-2">' +
+        '<div class="card"><div class="card-header"><span class="card-title">🌏 环亚冠军联赛</span>' +
+        '<span class="card-subtitle">' + (acl.winner ? '冠军：' + esc(teamById(acl.winner).name) : (acl.leagueDone ? '淘汰赛阶段' : '联赛阶段 第 ' + (acl.round + 1) + '/8 轮')) + '</span></div>' +
+        '<div class="kv"><span class="k">你的资格</span><span class="v" style="color:' + (qualified ? 'var(--green)' : 'var(--text-secondary)') + ';">' +
+        (qualified ? '已获得（' + esc(describeACLRun(team.id)) + '）' : '未获得（需上赛季华超前 3 或华夏杯夺冠）') + '</span></div>' +
+        '<div class="kv mt-8"><span class="k">赛制</span><span class="v" style="font-size:0.85rem;">东亚区 12 队 · 联赛阶段 8 轮 · 前 8 名进淘汰赛</span></div>' +
+        '<div class="kv mt-8"><span class="k">奖金</span><span class="v" style="font-size:0.85rem;">胜 ' + formatMoney(COMP_PRIZE.ACL_WIN) +
+        ' / 平 ' + formatMoney(COMP_PRIZE.ACL_DRAW) + '，夺冠 ' + formatMoney(COMP_PRIZE.ACL_KO[3]) + '</span></div>' +
+        '<div class="kv mt-8"><span class="k">冠军额外奖励</span><span class="v">环球杯参赛资格</span></div>' +
+        '</div>' +
+        '<div class="card"><div class="card-header"><span class="card-title">🏟️ 联赛阶段积分榜</span>' +
+        '<span class="card-subtitle">前 8 名晋级</span></div>' +
+        '<div class="table-wrap"><table><thead><tr><th>#</th><th>球队</th><th>场</th><th>胜</th><th>平</th><th>负</th><th>进:失</th><th>净</th><th>分</th></tr></thead>' +
+        '<tbody>' + tableRows + '</tbody></table></div></div></div>';
+
+    // 淘汰赛
+    const ko = acl.ko;
+    html += '<div class="card"><div class="card-header"><span class="card-title">🔥 淘汰赛</span>' +
+        '<span class="card-subtitle">' + (ko.done ? '已结束' : acl.leagueDone ? esc(CALENDAR.ACL_KO_NAMES[ko.stage]) : '联赛阶段结束后开始') + '</span></div>';
+    if (!acl.leagueDone) html += '<div class="empty">联赛阶段结束后进行（第 ' + CALENDAR.ACL_KO_ROUNDS.join('、') + ' 轮）</div>';
+    else {
+        if (!ko.done && ko.current.length) {
+            html += '<div class="card-subtitle" style="margin-bottom:4px;font-weight:700;color:var(--text);">' +
+                esc(CALENDAR.ACL_KO_NAMES[ko.stage]) + ' 对阵</div>' + ko.current.map(pendingRowHtml).join('');
+        }
+        html += ko.history.length
+            ? ko.history.map(function (h) { return roundBlockHtml(h.name, h.fixtures, false); }).join('')
+            : '';
+    }
+    html += '</div>';
+
+    // 联赛阶段赛果
+    html += '<div class="card"><div class="card-header"><span class="card-title">📜 联赛阶段赛果</span></div>' +
+        '<div class="scroll-y-lg">' +
+        (acl.history.length
+            ? acl.history.slice().reverse().map(function (h) { return roundBlockHtml('第 ' + h.round + ' 轮', h.fixtures, false); }).join('')
+            : '<div class="empty">尚无比赛</div>') +
+        '</div></div>';
+    return html;
+}
+
+function cwcQualifyText() {
+    const sorted = sortStandings();
+    const leagueChamp = sorted[0] ? sorted[0].teamId : null;
+    const aclChamp = gameState.acl ? gameState.acl.winner : null;
+    if (gameState.userTeamId && aclChamp === gameState.userTeamId) return '以环亚杯冠军身份入围（亚洲代表）';
+    if (gameState.userTeamId && leagueChamp === gameState.userTeamId) return '以华超冠军身份入围（东道主席位）';
+    return '需夺得华超冠军（东道主）或环亚杯冠军（亚洲代表）';
+}
+
+function cwcHtml() {
+    const c = gameState.cwc;
+    const team = gameState.userTeam;
+    let html = '<div class="card"><div class="card-header"><span class="card-title">🌍 环球杯</span>' +
+        '<span class="card-subtitle">赛季结束后举行</span></div>' +
+        '<div class="kv"><span class="k">参赛资格</span><span class="v" style="font-size:0.85rem;">' +
+        esc(team ? cwcQualifyText() : '需先选择球队') + '</span></div>' +
+        '<div class="kv mt-8"><span class="k">赛制</span><span class="v" style="font-size:0.85rem;">8 队单败淘汰：欧洲冠亚军、南美冠军、非洲冠军、中北美冠军、大洋洲冠军 + 环亚杯冠军 + 华超冠军</span></div>' +
+        '<div class="kv mt-8"><span class="k">奖金</span><span class="v" style="font-size:0.85rem;">参赛 ' + formatMoney(COMP_PRIZE.CWC_ENTRY) +
+        '，每轮晋级 ' + COMP_PRIZE.CWC_ROUND_WIN.map(formatMoney).join(' / ') + '，夺冠 ' + formatMoney(COMP_PRIZE.CWC_CHAMPION) + '</span></div>' +
+        '</div>';
+
+    if (!c || !c.teams || !c.teams.length) {
+        html += '<div class="card"><div class="empty">本赛季环球杯尚未产生 — 赛季结束后依据华超与环亚杯冠军确定参赛队</div></div>';
+        return html;
+    }
+
+    html += '<div class="card"><div class="card-header"><span class="card-title">🎫 参赛球队</span>' +
+        '<span class="card-subtitle">' + (c.userIn ? '你的球队在其中！' : '你的球队未入围') + '</span></div>' +
+        '<div class="grid-3">' + c.teams.map(function (id) {
+            const t = teamById(id);
+            if (!t) return '';
+            const isUser = id === gameState.userTeamId;
+            return '<div class="player-card" style="cursor:default;' + (isUser ? 'border-color:var(--gold);' : '') + '" data-action="open-team" data-id="' + id + '">' +
+                '<div style="font-size:1.6rem;">' + t.emoji + '</div>' +
+                '<div class="player-name" style="font-size:0.82rem;">' + esc(t.name) + '</div>' +
+                '<div class="player-detail">' + esc(t.country || t.desc || '') + '</div>' +
+                '<div class="player-detail" style="color:var(--gold);">实力 ' + (t.powerBase || '--') + '</div>' +
+                '</div>';
+        }).join('') + '</div></div>';
+
+    html += '<div class="card"><div class="card-header"><span class="card-title">🔥 淘汰赛进程</span>' +
+        '<span class="card-subtitle">' + (c.done ? '已结束 · 冠军 ' + (c.winner ? esc(teamById(c.winner).name) : '—') : esc(CALENDAR.CWC_NAMES[c.stage])) + '</span></div>';
+    if (!c.done && c.current.length) {
+        html += '<div class="card-subtitle" style="margin-bottom:4px;font-weight:700;color:var(--text);">' +
+            esc(CALENDAR.CWC_NAMES[c.stage]) + ' 对阵</div>' + c.current.map(pendingRowHtml).join('');
+    }
+    html += c.history.length ? c.history.map(function (h) { return roundBlockHtml(h.name, h.fixtures, false); }).join('') : '';
+    if (!c.done && c.userIn) {
+        html += '<div class="flex-wrap mt-14"><button class="btn btn-primary btn-sm" data-action="sim-cwc">🎲 模拟下一轮</button>' +
+            '<button class="btn btn-gold btn-sm" data-action="sim-cwc-all">⏩ 一键打到底</button></div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderComps() {
+    const body = document.getElementById('compBody');
+    if (!body) return;
+    if (currentCompTab === 'acl') body.innerHTML = aclHtml();
+    else if (currentCompTab === 'cwc') body.innerHTML = cwcHtml();
+    else body.innerHTML = cupHtml();
+    const tabs = document.querySelectorAll('#panel-comps .nav-tab');
+    for (let i = 0; i < tabs.length; i++) {
+        if (tabs[i].dataset.id === currentCompTab) tabs[i].classList.add('active');
+        else tabs[i].classList.remove('active');
+    }
+}
+
+function switchCompTab(id) {
+    currentCompTab = id;
+    renderComps();
+}
+
+/* ---------- 环球杯弹窗 ---------- */
+
+function openCWCModal() {
+    const c = gameState.cwc;
+    if (!c) { showToast('本赛季没有环球杯', true); return; }
+    renderCWCModal();
+    showModal('cwcModal');
+}
+
+function renderCWCModal() {
+    const c = gameState.cwc;
+    const body = document.getElementById('cwcModalBody');
+    if (!body || !c) return;
+    const team = getUserTeam();
+    let html = '<div class="center">' +
+        '<div style="font-size:2.4rem;">🌍</div>' +
+        '<h3>环球杯</h3>' +
+        '<div class="card-subtitle">' + (c.done ? '赛事已结束' : '8 强淘汰赛 · ' + esc(CALENDAR.CWC_NAMES[c.stage] || '')) + '</div>' +
+        '</div>';
+    if (c.userIn) {
+        html += '<div class="badge badge-gold mt-8" style="display:inline-block;">你的球队已参赛</div>';
+    }
+    if (!c.done && c.current.length) {
+        html += '<div class="mt-14">' + roundBlockHtml(CALENDAR.CWC_NAMES[c.stage] + ' 对阵', c.current, true) + '</div>';
+    }
+    if (c.history.length) {
+        html += '<div class="mt-14 scroll-y">' + c.history.map(function (h) { return roundBlockHtml(h.name, h.fixtures, false); }).join('') + '</div>';
+    }
+    if (c.done) {
+        const champ = c.winner ? teamById(c.winner) : null;
+        html += '<div class="center mt-14"><div style="font-size:2rem;">' + (champ ? champ.emoji : '🏆') + '</div>' +
+            '<div style="font-size:1.2rem;font-weight:800;color:var(--gold);">' + (champ ? esc(champ.name) : '—') + '</div>' +
+            '<div class="card-subtitle">环球杯冠军</div></div>';
+        if (c.winner === gameState.userTeamId) {
+            html += '<div class="center mt-8 badge badge-gold">🏆 世界冠军！</div>';
+        }
+        html += '<div class="mt-14 flex-wrap" style="justify-content:center;">' +
+            '<button class="btn btn-gold" data-action="close-cwc-season">📋 查看赛季总结</button></div>';
+    }
+    body.innerHTML = html;
+}
+
+/* ---------- 数据榜 ---------- */
+
+function renderStats() {
+    document.getElementById('statsScorers').innerHTML = statsTable(topScorers(15), 'goals', '');
+    document.getElementById('statsAssists').innerHTML = statsTable(topAssists(15), 'assists', '');
+    document.getElementById('statsRatings').innerHTML = statsTable(topRatings(15), 'avg', '');
+}
+
+function renderTransfer() {
+    const $ = function (id) { return document.getElementById(id); };
+    const team = gameState.userTeam;
+    const tbody = $('transferBody');
+
+    if (!team) {
+        $('transferBudget').textContent = '--';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">请先选择执教球队</td></tr>';
+        return;
+    }
+    const fin = gameState.finances[team.id];
+    $('transferBudget').textContent = formatMoney(fin.balance);
+    $('transferHint').textContent = '阵容 ' + team.players.length + '/' + ECON.MAX_SQUAD + ' 人 · 外援 ' +
+        team.players.filter(function (p) { return p.isForeign; }).length + '/' + ECON.MAX_FOREIGN + ' 名';
+
+    const filter = $('transferFilter').value;
+    let list = gameState.transferMarket.slice();
+    if (filter !== 'all') list = list.filter(function (p) { return p.position === filter; });
+
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">当前没有符合条件的球员，可点击「刷新市场」</td></tr>';
+        return;
+    }
+
+    const foreignFull = team.players.filter(function (p) { return p.isForeign; }).length >= ECON.MAX_FOREIGN;
+    const squadFull = team.players.length >= ECON.MAX_SQUAD;
+
+    tbody.innerHTML = list.map(function (p) {
+        const price = p.askingPrice || p.value;
+        const afford = fin.balance >= price;
+        const blocked = !afford || (p.isForeign && foreignFull) || squadFull;
+        let tip = '';
+        if (!afford) tip = '余额不足';
+        else if (p.isForeign && foreignFull) tip = '外援已满';
+        else if (squadFull) tip = '人数已满';
+
+        return '<tr>' +
+            '<td><strong>' + esc(p.name) + '</strong>' + (p.isForeign ? ' <span class="card-subtitle">[' + esc(p.nationality) + ']</span>' : '') + '</td>' +
+            '<td><span class="pos-badge ' + POS_CLASS[p.position] + '" style="font-size:0.65rem;">' + POS_LABEL[p.position] + '</span></td>' +
+            '<td>' + p.age + '</td>' +
+            '<td><span class="stars">' + stars(p.ability, 5) + '</span> ' + p.ability + '</td>' +
+            '<td style="color:var(--text-secondary);">' + p.potential + '</td>' +
+            '<td>' + formatMoney(p.value) + '</td>' +
+            '<td><strong style="color:' + (afford ? 'var(--gold)' : 'var(--primary)') + ';">' + formatMoney(price) + '</strong></td>' +
+            '<td><button class="btn btn-success btn-sm" data-action="buy-player" data-id="' + p.id + '"' + (blocked ? ' disabled' : '') + '>' +
+            (tip || '购买') + '</button></td>' +
+            '</tr>';
+    }).join('');
+}
+
+function renderFinance() {
+    const $ = function (id) { return document.getElementById(id); };
+    const team = gameState.userTeam;
+    if (!team) {
+        $('finBalance').textContent = '--';
+        $('finIncome').textContent = '0 万';
+        $('finExpense').textContent = '0 万';
+        $('finWage').textContent = '0 万';
+        $('finCapacity').textContent = '--';
+        $('finSeason').textContent = '--';
+        $('finTip').textContent = '';
+        $('finDetails').innerHTML = '<div class="empty">请先选择执教球队</div>';
+        return;
+    }
+    const fin = gameState.finances[team.id];
+    const wage = wageBillOf(team);
+    $('finSeason').textContent = '第 ' + gameState.season + ' 赛季';
+    $('finBalance').textContent = formatMoney(fin.balance);
+    $('finBalance').style.color = fin.balance < 0 ? 'var(--primary)' : 'var(--gold)';
+    $('finIncome').textContent = formatMoney(fin.income);
+    $('finExpense').textContent = formatMoney(fin.expense);
+    $('finWage').textContent = formatMoney(wage);
+    $('finCapacity').textContent = team.capacity.toLocaleString('zh-CN') + ' 人';
+
+    const net = Math.round(fin.income / Math.max(1, gameState.round) - fin.expense / Math.max(1, gameState.round));
+    $('finTip').innerHTML = '场均净收支约 <strong style="color:' + (net >= 0 ? 'var(--green)' : 'var(--primary)') + ';">' +
+        (net >= 0 ? '+' : '') + formatMoney(net) + '</strong>／轮　·　每轮薪资占身价约 ' + (ECON.WAGE_RATE * 100).toFixed(1) + '%' +
+        (fin.balance < 0 ? '　<span class="badge badge-red">注意：余额为负</span>' : '');
+
+    $('finDetails').innerHTML = fin.history.slice().reverse().slice(0, 30).map(function (h) {
+        const isIncome = h.type === 'income';
+        const isExpense = h.type === 'expense';
+        const color = isIncome ? 'var(--green)' : isExpense ? 'var(--primary)' : 'var(--text-secondary)';
+        const sign = isIncome ? '+' : isExpense ? '-' : '';
+        return '<div style="padding:7px 0;border-bottom:1px solid rgba(42,45,61,0.5);font-size:0.82rem;">' +
+            '<span style="color:' + color + ';font-weight:700;">' + sign + formatMoney(h.amount) + '</span>' +
+            '　' + esc(h.desc) +
+            '<span class="card-subtitle" style="font-size:0.68rem;margin-left:6px;">第' + h.season + '赛季' + (h.round ? '·第' + h.round + '轮' : '') + '</span>' +
+            '</div>';
+    }).join('') || '<div class="empty">暂无记录</div>';
+}
+
+function renderMatch() {
+    const $ = function (id) { return document.getElementById(id); };
+    const rr = gameState.roundResults;
+    const played = !!(rr && rr.round === gameState.round);
+    const userMatch = played ? userMatchOf(rr) : null;
+
+    $('matchRound').textContent = gameState.round;
+    $('matchTotalRounds').textContent = gameState.totalRounds;
+
+    if (played && userMatch) {
+        const isHome = userMatch.homeId === gameState.userTeamId;
+        const gf = isHome ? userMatch.hg : userMatch.ag;
+        const ga = isHome ? userMatch.ag : userMatch.hg;
+        $('matchHomeTeam').textContent = userMatch.homeEmoji + ' ' + userMatch.homeName;
+        $('matchAwayTeam').textContent = userMatch.awayEmoji + ' ' + userMatch.awayName;
+        $('matchScore').textContent = userMatch.hg + ' : ' + userMatch.ag;
+        const txt = gf > ga ? '🏆 胜利' : gf === ga ? '🤝 平局' : '😞 失利';
+        $('matchVs').textContent = txt;
+        const mine = userMatch.timeline.filter(function (e) {
+            return (isHome && e.side === 'home') || (!isHome && e.side === 'away');
+        });
+        $('matchScorers').innerHTML = mine.length
+            ? '⚽ ' + mine.map(function (e) {
+                return e.min + "' " + esc(e.scorerName) + (e.og ? '（乌龙）' : '');
+            }).join('　·　')
+            : '本场无进球';
+        $('matchStatus').textContent = txt + '　预期进球 ' + userMatch.xgH + ' - ' + userMatch.xgA +
+            '　' + (isHome ? '主场' : '客场') + '作战';
+        $('matchVenue').textContent = isHome
+            ? '主场 · ' + (gameState.userTeam ? gameState.userTeam.stadium : '')
+            : '客场 · ' + (teamById(userMatch.homeId) ? teamById(userMatch.homeId).stadium : '');
+    } else {
+        // 未开赛：展示本轮对阵预览
+        const fixtures = gameState.schedule[gameState.round - 1] || [];
+        let next = null;
+        fixtures.forEach(function (f) {
+            if (f.home === gameState.userTeamId || f.away === gameState.userTeamId) next = f;
+        });
+        if (next) {
+            const home = teamById(next.home);
+            const away = teamById(next.away);
+            const isHome = next.home === gameState.userTeamId;
+            $('matchHomeTeam').textContent = home ? home.emoji + ' ' + home.name : '--';
+            $('matchAwayTeam').textContent = away ? away.emoji + ' ' + away.name : '--';
+            $('matchVenue').textContent = isHome
+                ? '主场 · ' + (home ? home.stadium : '')
+                : '客场 · ' + (home ? home.stadium : '');
+        } else {
+            $('matchHomeTeam').textContent = '--';
+            $('matchAwayTeam').textContent = '--';
+            $('matchVenue').textContent = '';
+        }
+        $('matchScore').textContent = '- : -';
+        $('matchVs').textContent = 'VS';
+        $('matchScorers').textContent = '';
+        $('matchStatus').textContent = gameState.userTeam
+            ? (gameState.seasonComplete ? '赛季已结束' : '准备就绪，点击「模拟本轮」一次性结算全部 8 场比赛')
+            : '请先选择执教球队';
+    }
+
+    $('btnSimMatch').disabled = played || gameState.seasonComplete || !gameState.userTeam;
+    $('btnNextRound').disabled = !played || gameState.seasonComplete;
+
+    // 本轮玩家参加的其他赛事（华夏杯 / 环亚杯）
+    const cupMine = played ? compMatchesUserPlayed(rr.cup) : [];
+    const aclMine = played ? compMatchesUserPlayed(rr.acl) : [];
+    const compCard = $('myCompCard');
+    const mine = cupMine.map(function (m) { return { tag: 'cup', m: m }; })
+        .concat(aclMine.map(function (m) { return { tag: 'acl', m: m }; }));
+    if (mine.length) {
+        compCard.style.display = 'block';
+        $('myCompSub').textContent = '第 ' + gameState.round + ' 轮周中';
+        $('myCompMatches').innerHTML = mine.map(function (item) {
+            const m = item.m;
+            const isHome = m.homeId === gameState.userTeamId;
+            const gf = isHome ? m.hg : m.ag;
+            const ga = isHome ? m.ag : m.hg;
+            const won = m.winnerId === gameState.userTeamId;
+            const txt = won ? '晋级 ✅' : '出局 ❌';
+            const pensTxt = m.pens ? '（点球 ' + m.pens.h + '-' + m.pens.a + '）' : '';
+            const scorers = m.timeline.filter(function (e) {
+                return (isHome && e.side === 'home') || (!isHome && e.side === 'away');
+            }).map(function (e) { return e.min + "' " + esc(e.scorerName) + (e.og ? '(乌龙)' : ''); }).join('、');
+            return '<div class="fixture-row is-user" style="flex-direction:column;align-items:stretch;gap:2px;">' +
+                '<div class="flex-wrap" style="justify-content:space-between;">' +
+                    '<span class="badge ' + (item.tag === 'cup' ? 'badge-gold' : 'badge-blue') + '">' + COMP_LABEL[item.tag] + '</span>' +
+                    '<span style="font-weight:700;">' + esc(m.homeName) + ' <span style="color:var(--gold);">' + m.hg + ' - ' + m.ag + '</span> ' + esc(m.awayName) + ' ' + pensTxt + '</span>' +
+                    '<span style="color:' + (won ? 'var(--green)' : 'var(--primary)') + ';font-weight:700;">' + txt + '</span>' +
+                '</div>' +
+                (scorers ? '<div class="card-subtitle" style="font-size:0.72rem;">⚽ ' + scorers + '</div>' : '') +
+                '</div>';
+        }).join('');
+    } else {
+        compCard.style.display = 'none';
+        $('myCompMatches').innerHTML = '';
+    }
+
+    // 本轮赛程（联赛 + 周中杯赛/环亚杯）
+    const list = played ? rr.fixtures : (gameState.schedule[gameState.round - 1] || []).map(function (f) {
+        const home = teamById(f.home);
+        const away = teamById(f.away);
+        return {
+            homeId: f.home, awayId: f.away,
+            homeName: home ? home.name : '?', awayName: away ? away.name : '?',
+            homeEmoji: home ? home.emoji : '', awayEmoji: away ? away.emoji : '',
+            hg: null, ag: null,
+            isUser: f.home === gameState.userTeamId || f.away === gameState.userTeamId,
+        };
+    });
+    let fixturesHtml = '<div class="card-subtitle" style="font-weight:700;margin-bottom:4px;">华夏超级联赛</div>' +
+        (list.map(function (m) {
+            const score = played ? (m.hg + ' - ' + m.ag) : 'VS';
+            return '<div class="fixture-row' + (m.isUser ? ' is-user' : '') + '">' +
+                '<div class="fx-team">' + esc(m.homeEmoji) + ' ' + esc(m.homeName) + '</div>' +
+                '<div class="fx-score">' + score + '</div>' +
+                '<div class="fx-team away">' + esc(m.awayName) + ' ' + esc(m.awayEmoji) + '</div>' +
+                '</div>';
+        }).join('') || '<div class="empty">赛程载入中…</div>');
+
+    if (played && rr.cup && rr.cup.length) {
+        fixturesHtml += '<div class="card-subtitle" style="font-weight:700;margin:12px 0 4px;">🏆 华夏杯 ' +
+            esc(CALENDAR.CUP_STAGE_NAMES[(gameState.cup ? gameState.cup.stage : 1) - 1] || '') + '</div>' +
+            rr.cup.map(playedRowHtml).join('');
+    }
+    if (played && rr.acl && rr.acl.length) {
+        const aclTitle = gameState.acl && gameState.acl.ko.stage > 0 && gameState.acl.history.length >= gameState.acl.schedule.length
+            ? '环亚杯 ' + esc(CALENDAR.ACL_KO_NAMES[gameState.acl.ko.stage - 1] || '淘汰赛')
+            : '环亚杯 联赛阶段 第 ' + (gameState.acl ? gameState.acl.round : 1) + ' 轮';
+        fixturesHtml += '<div class="card-subtitle" style="font-weight:700;margin:12px 0 4px;">🌏 ' + aclTitle + '</div>' +
+            rr.acl.map(playedRowHtml).join('');
+    }
+    if (!played && gameState.userTeam) {
+        const up = [];
+        if (CALENDAR.CUP_ROUNDS.indexOf(gameState.round) >= 0 && gameState.cup && !gameState.cup.done) {
+            up.push('🏆 华夏杯' + CALENDAR.CUP_STAGE_NAMES[gameState.cup.stage]);
+        }
+        if (CALENDAR.ACL_LEAGUE_ROUNDS.indexOf(gameState.round) >= 0 && gameState.acl && !gameState.acl.leagueDone) {
+            up.push('🌏 环亚杯联赛阶段第 ' + (gameState.acl.round + 1) + ' 轮');
+        } else if (CALENDAR.ACL_KO_ROUNDS.indexOf(gameState.round) >= 0 && gameState.acl && gameState.acl.leagueDone && !gameState.acl.ko.done) {
+            up.push('🌏 环亚杯' + CALENDAR.ACL_KO_NAMES[gameState.acl.ko.stage]);
+        }
+        if (up.length) {
+            fixturesHtml += '<div class="card-subtitle" style="margin-top:12px;">本周中还有：' + up.join('　') + '</div>';
+        }
+    }
+    $('fixturesRound').textContent = '第 ' + gameState.round + ' 轮';
+    $('otherFixtures').innerHTML = fixturesHtml;
+
+    // 进球时间轴
+    const tlCard = $('timelineCard');
+    if (played && rr.fixtures.some(function (m) { return m.timeline.length; })) {
+        tlCard.style.display = 'block';
+        $('timelineSub').textContent = '绿点 = 主队进球　蓝点 = 客队进球';
+        const items = [];
+        rr.fixtures.forEach(function (m) {
+            if (!m.isUser) return;
+            m.timeline.forEach(function (e) {
+                items.push('<div class="tl-item ' + e.side + '">' +
+                    '<span class="tl-min">' + e.min + "'</span>" +
+                    '<strong>' + esc(e.scorerName) + '</strong>' +
+                    (e.og ? ' <span class="badge badge-grey">乌龙</span>' : '') +
+                    (e.assistName ? ' <span class="card-subtitle">助攻：' + esc(e.assistName) + '</span>' : '') +
+                    ' <span class="card-subtitle">(' + esc(e.side === 'home' ? m.homeName : m.awayName) + ')</span>' +
+                    '</div>');
+            });
+        });
+        $('matchTimeline').innerHTML = items.join('') || '<div class="empty">本场无进球</div>';
+    } else {
+        tlCard.style.display = 'none';
+        $('matchTimeline').innerHTML = '';
+    }
+}
+
+/* ==================== 十六、模态框 ==================== */
+
+function showModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex';
+}
+
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+}
+
+function openTeamSelect() {
+    renderTeamSelect();
+    showModal('teamSelectModal');
+}
+
+function renderTeamSelect() {
+    document.getElementById('teamSelectGrid').innerHTML = TEAM_POOL.map(function (t) {
+        return '<div class="player-card" data-action="select-team" data-id="' + t.id + '">' +
+            '<div style="font-size:2rem;">' + t.emoji + '</div>' +
+            '<div class="player-name">' + esc(t.name) + '</div>' +
+            '<div class="player-detail">🏙️ ' + esc(t.city) + '</div>' +
+            '<div class="player-detail">💪 实力 ' + t.powerBase + '</div>' +
+            '<div class="player-detail">💰 ' + formatMoney(t.budgetBase) + '</div>' +
+            '</div>';
+    }).join('');
+}
+
+function openPlayer(playerId) {
+    const p = findPlayerById(playerId);
+    if (!p) { showToast('未找到该球员', true); return; }
+    const team = teamOfPlayer(playerId);
+    const isMine = !!(team && team.id === gameState.userTeamId);
+    const avg = p.apps ? (p.ratingSum / p.apps).toFixed(2) : '--';
+    const fitColor = p.fitness >= 70 ? 'green' : p.fitness >= 45 ? 'orange' : 'red';
+    const morColor = p.morale >= 70 ? 'green' : p.morale >= 45 ? 'orange' : 'red';
+
+    document.getElementById('playerModalBody').innerHTML =
+        '<div class="center" style="margin-bottom:14px;">' +
+            '<span class="pos-badge ' + POS_CLASS[p.position] + '">' + POS_LABEL[p.position] + '</span>' +
+            (p.isForeign ? ' <span class="badge badge-blue">' + esc(p.nationality) + '</span>' : '') +
+            (p.injury > 0 ? ' <span class="badge badge-red">伤停 ' + p.injury + ' 轮</span>' : '') +
+            '<h3 style="margin:8px 0;">' + esc(p.name) + '</h3>' +
+            '<div style="font-size:2rem;font-weight:900;color:var(--gold);line-height:1.1;">' + p.ability + '</div>' +
+            '<div class="card-subtitle">能力值 <span class="stars">' + stars(p.ability) + '</span></div>' +
+            (team ? '<div class="card-subtitle">所属球队：' + esc(team.name) + '</div>' : '<div class="card-subtitle">自由球员 / 转会市场</div>') +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.88rem;">' +
+            '<div><strong>年龄：</strong>' + p.age + ' 岁</div>' +
+            '<div><strong>潜力：</strong>' + p.potential + '</div>' +
+            '<div><strong>身价：</strong>' + formatMoney(p.value) + '</div>' +
+            '<div><strong>每轮薪资：</strong>' + formatMoney(p.wage) + '</div>' +
+            (p.askingPrice ? '<div><strong>转会要价：</strong><span style="color:var(--gold);">' + formatMoney(p.askingPrice) + '</span></div>' : '') +
+            '<div><strong>国籍：</strong>' + esc(p.nationality) + '</div>' +
+            '<div><strong>出场：</strong>' + p.apps + ' 场</div>' +
+            '<div><strong>进球 / 助攻：</strong>' + (p.goals || 0) + ' / ' + (p.assists || 0) + '</div>' +
+            '<div><strong>平均评分：</strong>' + avg + '</div>' +
+        '</div>' +
+        '<div class="mt-14">' +
+            '<div class="card-subtitle">体能 ' + p.fitness + '%</div>' +
+            '<div class="progress-bar"><div class="progress-fill ' + fitColor + '" style="width:' + p.fitness + '%"></div></div>' +
+        '</div>' +
+        '<div class="mt-8">' +
+            '<div class="card-subtitle">士气 ' + p.morale + '%</div>' +
+            '<div class="progress-bar"><div class="progress-fill ' + morColor + '" style="width:' + p.morale + '%"></div></div>' +
+        '</div>' +
+        (isMine
+            ? '<div class="center mt-14"><button class="btn btn-danger btn-sm" data-action="sell-player" data-id="' + p.id + '">出售球员（约 ' +
+              formatMoney(round5(p.value * 0.85)) + '）</button></div>'
+            : (p.askingPrice && gameState.userTeam
+                ? '<div class="center mt-14"><button class="btn btn-success btn-sm" data-action="buy-player" data-id="' + p.id + '">签下该球员</button></div>'
+                : ''));
+
+    showModal('playerModal');
+}
+
+function openSeasonModal() {
+    const s = gameState.lastSeasonSummary;
+    if (!s) { showToast('暂无赛季总结', true); return; }
+    const cwc = gameState.cwc;
+    const cwcLine = cwc && cwc.teams && cwc.teams.length
+        ? (cwc.userIn
+            ? (cwc.done ? (cwc.winner === gameState.userTeamId ? '冠军 🏆' : describeCWCRun(gameState.userTeamId)) : '进行中')
+            : '未入围')
+        : '未举办';
+    document.getElementById('seasonModalBody').innerHTML =
+        '<div class="center">' +
+            '<div style="font-size:2.4rem;">' + esc(s.teamEmoji) + '</div>' +
+            '<h3>第 ' + s.season + ' 赛季结束</h3>' +
+            '<div class="card-subtitle">' + esc(s.teamName) + ' 最终排名</div>' +
+            '<div style="font-size:2.6rem;font-weight:900;color:var(--gold);line-height:1.2;">第 ' + s.rank + ' 名</div>' +
+        '</div>' +
+        '<div class="mt-14" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">' +
+            '<div><strong>积分：</strong>' + s.points + '</div>' +
+            '<div><strong>战绩：</strong>' + s.wins + '胜 ' + s.draws + '平 ' + s.losses + '负</div>' +
+            '<div><strong>进失球：</strong>' + s.goalsFor + ' / ' + s.goalsAgainst + '</div>' +
+            '<div><strong>排名奖金：</strong><span style="color:var(--green);">' + formatMoney(s.prize) + '</span></div>' +
+            '<div><strong>队内最佳射手：</strong>' + (s.topScorer ? esc(s.topScorer.p.name) + '（' + s.topScorer.p.goals + ' 球）' : '—') + '</div>' +
+            '<div><strong>俱乐部余额：</strong><span style="color:var(--gold);">' + formatMoney(s.balance) + '</span></div>' +
+        '</div>' +
+        '<div class="mt-14" style="border-top:1px solid var(--border);padding-top:10px;font-size:0.88rem;">' +
+            '<div><strong>🏆 华夏杯：</strong>' + esc(s.cupResult) + '　<span class="card-subtitle">冠军 ' + esc(s.cupWinner) + '</span></div>' +
+            '<div class="mt-8"><strong>🌏 环亚杯：</strong>' + esc(s.aclResult) + '　<span class="card-subtitle">冠军 ' + esc(s.aclWinner) + '</span></div>' +
+            '<div class="mt-8"><strong>🌍 环球杯：</strong>' + esc(cwcLine) + '</div>' +
+        '</div>' +
+        '<div class="mt-14 card-subtitle">点击「开启新赛季」后：球员将成长/老化、青训补充新人、赛程与积分榜重置，华夏杯重新抽签，环亚杯按本赛季成绩重新分配名额；俱乐部资金与阵容保留。</div>';
+    showModal('seasonModal');
+}
+
+// 环球杯结束后收尾
+function finishCWC() {
+    const c = gameState.cwc;
+    if (!c || !c.done) return;
+    if (c.userIn) {
+        const champ = teamById(c.winner);
+        addNews('🌍 环球杯落幕，冠军：' + (champ ? champ.name : '—'));
+    }
+    commit();
+    closeModal('cwcModal');
+    openSeasonModal();
+}
+
+function describeCWCRun(teamId) {
+    const c = gameState.cwc;
+    if (!c || !c.teams || c.teams.indexOf(teamId) < 0) return '未入围';
+    if (c.winner === teamId) return '冠军 🏆';
+    for (let i = 0; i < c.history.length; i++) {
+        const h = c.history[i];
+        for (let j = 0; j < h.fixtures.length; j++) {
+            const m = h.fixtures[j];
+            if ((m.homeId === teamId || m.awayId === teamId) && m.winnerId !== teamId) return '止步' + h.name;
+        }
+    }
+    return c.done ? '已结束' : '进行中';
+}
+
+// 查看对手球队信息（环球杯/环亚杯参赛队）
+function openTeamInfo(teamId) {
+    const t = teamById(teamId);
+    if (!t) return;
+    const r = teamRatings(t);
+    const best = t.players.slice().sort(function (a, b) { return b.ability - a.ability; }).slice(0, 6);
+    document.getElementById('playerModalBody').innerHTML =
+        '<div class="center" style="margin-bottom:12px;">' +
+            '<div style="font-size:2.4rem;">' + t.emoji + '</div>' +
+            '<h3>' + esc(t.name) + '</h3>' +
+            '<div class="card-subtitle">' + esc(t.country || t.city || '') + (t.desc ? ' · ' + esc(t.desc) : '') + '</div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.9rem;text-align:center;">' +
+            '<div><div class="card-subtitle">综合实力</div><strong style="color:var(--gold);font-size:1.2rem;">' + r.overall + '</strong></div>' +
+            '<div><div class="card-subtitle">进攻</div><strong style="color:var(--orange);font-size:1.2rem;">' + r.attack + '</strong></div>' +
+            '<div><div class="card-subtitle">防守</div><strong style="color:var(--blue);font-size:1.2rem;">' + r.defense + '</strong></div>' +
+        '</div>' +
+        '<div class="mt-14 card-subtitle" style="font-weight:700;color:var(--text);">主要球员</div>' +
+        best.map(function (p) {
+            return '<div class="fixture-row clickable" data-action="open-player" data-id="' + p.id + '">' +
+                '<div class="fx-team">' + esc(p.name) + ' <span class="card-subtitle">' + POS_LABEL[p.position] + '</span></div>' +
+                '<div class="fx-score" style="font-size:0.8rem;">' + p.ability + '</div>' +
+                '<div class="fx-team away card-subtitle">' + p.age + ' 岁</div>' +
+                '</div>';
+        }).join('') +
+        '<div class="card-subtitle mt-14">（对手阵容仅用于比赛模拟，不参与转会市场）</div>';
+    showModal('playerModal');
+}
+
+/* ==================== 十七、事件绑定 ==================== */
+
+const ACTIONS = {
+    tab: function (id) { switchPanel(id); },
+    'select-team': function (id) { selectTeam(id); },
+    'open-player': function (id) { openPlayer(id); },
+    'buy-player': function (id) { buyPlayer(id); },
+    'sell-player': function (id) { sellPlayer(id); },
+    tactics: function (id) { setTactics(id); },
+    'sim-match': function () { if (currentPanel !== 'match') switchPanel('match'); simulateRound(); },
+    'next-round': function () { nextRound(); },
+    'refresh-market': function () { refreshTransferMarket(true); commit(); },
+    'close-modal': function (id) {
+        // 未选择球队时不允许关闭选队弹窗，否则会没有入口
+        if (id === 'teamSelectModal' && !gameState.userTeamId) {
+            showToast('请先选择一支球队开始执教', true);
+            return;
+        }
+        closeModal(id);
+    },
+    save: function () { saveGame(true); },
+    load: function () {
+        if (loadGame(true)) {
+            render();
+            if (!gameState.userTeam) openTeamSelect();
+            else if (gameState.seasonComplete) openSeasonModal();
+        }
+    },
+    restart: function () { restartGame(); },
+    'new-season': function () { startNewSeason(); },
+    comptab: function (id) { switchCompTab(id); },
+    'sim-cwc': function () {
+        if (!gameState.cwc || gameState.cwc.done) { showToast('环球杯尚未开始或已结束', true); return; }
+        simulateCWCRound();
+        commit();
+        renderCWCModal();
+        if (gameState.cwc.done) finishCWC();
+    },
+    'sim-cwc-all': function () {
+        if (!gameState.cwc || gameState.cwc.done) { showToast('环球杯尚未开始或已结束', true); return; }
+        let guard = 0;
+        while (gameState.cwc && !gameState.cwc.done && gameState.cwc.current.length && guard++ < 10) simulateCWCRound();
+        commit();
+        renderCWCModal();
+        if (gameState.cwc.done) finishCWC();
+    },
+    'close-cwc-season': function () {
+        closeModal('cwcModal');
+        openSeasonModal();
+    },
+    'open-team': function (id) { openTeamInfo(id); },
+};
+
+function onDocumentClick(e) {
+    const target = e.target;
+    if (!target || !target.closest) return;
+    const el = target.closest('[data-action]');
+    if (!el) return;
+    if (el.dataset.self === '1' && e.target !== el) return;   // 只有点到遮罩本身才关闭
+
+    const handler = ACTIONS[el.dataset.action];
+    if (!handler) return;
+    e.preventDefault();
+    handler(el.dataset.id, el);
+}
+
+function onDocumentChange(e) {
+    const el = e.target;
+    if (!el || !el.id) return;
+    if (el.id === 'squadFilter' || el.id === 'squadSort') renderSquad();
+    else if (el.id === 'transferFilter') renderTransfer();
+}
+
+const PANEL_KEYS = ['dashboard', 'squad', 'match', 'standings', 'comps', 'stats', 'transfer', 'finance'];
+
+function onDocumentKeyDown(e) {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 's') {
+        e.preventDefault();
+        saveGame(true);
+        return;
+    }
+    if (e.key === 'Escape') {
+        closeModal('playerModal');
+        closeModal('seasonModal');
+        if (gameState.userTeamId) closeModal('teamSelectModal');
+        return;
+    }
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= PANEL_KEYS.length) { switchPanel(PANEL_KEYS[n - 1]); return; }
+
+    if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        if (!gameState.userTeam) { showToast('请先选择执教球队', true); openTeamSelect(); return; }
+        if (gameState.seasonComplete) { openSeasonModal(); return; }
+        if (!gameState.roundResults) {
+            switchPanel('match');
+            simulateRound();
+        } else {
+            nextRound();
+        }
+    }
+}
+
+function createBgParticles() {
+    const container = document.getElementById('bgParticles');
+    if (!container) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let html = '';
+    for (let i = 0; i < 18; i++) {
+        const size = rand(4, 16);
+        html += '<div class="bg-particle" style="left:' + rand(0, 100) + '%;width:' + size + 'px;height:' + size +
+            'px;animation-delay:' + rand(0, 24) + 's;animation-duration:' + rand(18, 36) + 's;"></div>';
+    }
+    container.innerHTML = html;
+}
+
+/* ==================== 十八、启动 ==================== */
+
+function boot() {
+    createBgParticles();
+    document.addEventListener('click', onDocumentClick);
+    document.addEventListener('change', onDocumentChange);
+    document.addEventListener('keydown', onDocumentKeyDown);
+
+    const restored = loadGame(false);
+    if (!restored) {
+        newGame();
+        render();
+        openTeamSelect();
+    } else {
+        render();
+        if (!gameState.userTeam) openTeamSelect();
+        else {
+            if (gameState.seasonComplete) openSeasonModal();
+            showToast('已读取上次存档，继续执教 ' + gameState.userTeam.name, false, true);
+        }
+    }
+
+    console.log('%c⚽ 华夏足球大亨已就绪', 'color:#e63946;font-weight:bold;font-size:14px;');
+    console.log('快捷键：1-7 切换面板 | 空格 模拟本轮/下一轮 | Ctrl+S 存档 | Esc 关闭弹窗');
+    console.log('数据年份：' + (START_YEAR + gameState.season - 1) + ' 赛季，共 ' + gameState.totalRounds + ' 轮');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+} else {
+    boot();
+}
+</script>
+</body>
+</html>
+
